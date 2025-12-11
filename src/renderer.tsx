@@ -1,12 +1,8 @@
 // 运行在 Electron 渲染进程 下的页面脚本
-const { createRoot } = require("react-dom/client");
+import { createRoot } from 'react-dom/client';
 import React from 'react';
-
-
-(React as any).createRoot = createRoot;
 import { SettingPage } from "./components/setting_page";
-
-const hljs = require('highlight.js');
+import hljs from 'highlight.js';
 import markdownIt from 'markdown-it';
 
 
@@ -68,7 +64,7 @@ function render() {
     try {
       renderSingleMsgBox(msgBox as HTMLElement);
     } catch (e) {
-      mditLogger('debug', 'Render msgbox failed', e);
+      mditLogger('error', 'Render msgbox failed', e);
     }
   }
 
@@ -116,10 +112,6 @@ async function renderSingleMsgBox(messageBox: HTMLElement) {
   mditLogger('debug', 'renderSingleMsgBox', 'originalSpanList:', originalSpanList);
   if (originalSpanList.length == 0) return;
 
-  // used as pivot when we're inserting rendered elements later.
-  // const posBase = document.createElement('span')
-  // originalSpanList[0].before(posBase);
-
   // Here using entityProcess which may finally call DOMParser().parseFromString(input, "text/html");
   // This may introduce XSS attack vulnerability, however, we will use DOMPurify to prevent all
   // dangerous HTML elements when rendering markdown.
@@ -143,13 +135,6 @@ async function renderSingleMsgBox(messageBox: HTMLElement) {
     // here means no any frag processor could handle this msgSpan, just return itself, 
     // in other word, keep it's original looks.
     return { original: msgSpan, rendered: msgSpan };
-
-    // if undefined, this element should be ignored and not be removed in later process.
-    // if (retInfo === undefined) {
-    //   msgPiece.classList.add(markdownIgnoredPieceClassName);
-    // }
-    // mditLogger('debug', 'PieceProcessor', 'Piece processor return:', retInfo);
-    // return retInfo;
   });
 
   mditLogger('debug', 'RenderedList generated, start replacing messagebox children...');
@@ -157,40 +142,10 @@ async function renderSingleMsgBox(messageBox: HTMLElement) {
   // replace the children based on rendered info
   for (let renderedInfo of renderedSpanInfo) {
     mditLogger('debug', 'Try to replace:', renderedInfo);
-    let originalIsChildren = originalSpanList.some((e) => e === renderedInfo.original);
-    // mditLogger('debug', 'Original element in messageBox:', originalIsChildren);
     messageBox.replaceChild(renderedInfo.rendered, renderedInfo.original);
   }
 
-
-  // 渲染 markdown
-  // const marks = markPieces.filter(p => p !== undefined).map((p) => p.mark).reduce((acc, p) => acc + p, "");
-  // mditLogger('debug', 'MarkdownRender Input:', marks);
-  // let renderedHtml = renderedHtmlProcessor(await generateMarkdownIns().render(marks));
-  // mditLogger('debug', 'MarkdownRender Output:', renderedHtml);
-
-  // 移除旧元素
-  // originalSpanList
-  //   .filter((e) => messageBox.hasChildNodes())
-  //   .forEach((e) => {
-  //     // do not remove formerly ignored elements
-  //     if (e.classList.contains(markdownIgnoredPieceClassName)) {
-  //       mditLogger('debug', 'Remove Ignore Triggered:', e);
-  //       return;
-  //     }
-  //     messageBox.removeChild(e);
-  //   });
-
-  // // 将原有元素替换回内容
-  // const markdownBody = document.createElement('div');
-  // // some themes rely on this class to render
-  // markdownBody.innerHTML = `<div class="text-normal">${renderedHtml}</div>`;
-  // markPieces.filter((p) => (p?.replace !== undefined))
-  //   .forEach((p) => {
-  //     p.replace(markdownBody, p.id);
-  //   });
-
-  let markdownBody = messageBox;
+  const markdownBody = messageBox;
 
   // Handle click of Copy Code Button
   addOnClickHandleForCopyButton(markdownBody);
@@ -214,13 +169,16 @@ function _onLoad() {
   loadCSSFromURL(`local:///${plugin_path}/src/style/hljs-github.css`, 'github-hl-adaptive');
 
   // Change fenced code block theme based on settings.
-  let _ = useSettingsStore.subscribe(state => (state.codeHighligtThemeFollowSystem), (isFollowSystem) => {
-    if (isFollowSystem) {
-      loadCSSFromURL(`local:///${plugin_path}/src/style/hljs-github.css`, 'github-hl-adaptive');
-    } else {
-      loadCSSFromURL(`local:///${plugin_path}/src/style/hljs-github-dark.css`, 'github-hl-dark');
+  useSettingsStore.subscribe(
+    (state: { codeHighligtThemeFollowSystem: boolean }) => state.codeHighligtThemeFollowSystem, 
+    (isFollowSystem: boolean) => {
+      if (isFollowSystem) {
+        loadCSSFromURL(`local:///${plugin_path}/src/style/hljs-github.css`, 'github-hl-adaptive');
+      } else {
+        loadCSSFromURL(`local:///${plugin_path}/src/style/hljs-github-dark.css`, 'github-hl-dark');
+      }
     }
-  });
+  );
 
 
   // Observe the change of message list. Once changed, trigger render() function.
@@ -262,7 +220,7 @@ function onLoad() {
 
 // 打开设置界面时触发
 function onSettingWindowCreated(view: HTMLElement) {
-  let root = (React as any).createRoot(view);
+  const root = createRoot(view);
   root.render(<SettingPage></SettingPage>);
 }
 

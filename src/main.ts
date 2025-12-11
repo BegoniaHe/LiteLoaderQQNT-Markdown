@@ -1,6 +1,6 @@
 // 运行在 Electron 主进程 下的插件入口
-const {ipcMain} = require("electron");
-import {generateMainProcessLogerWriter, LogPathHelper} from '@/utils/logger_main';
+import { ipcMain, IpcMainInvokeEvent } from 'electron';
+import { generateMainProcessLogerWriter, LogPathHelper } from '@/utils/logger_main';
 
 const loggerWriter = generateMainProcessLogerWriter();
 
@@ -14,10 +14,10 @@ function onBrowserWindowCreated() {
 
 // 加载插件时触发
 function onLoad() {
-    ipcMain.handle('LiteLoader.markdown_it.log', (e: any, consoleMode: any, ...args: any[]) => {
+    ipcMain.handle('LiteLoader.markdown_it.log', (_event: IpcMainInvokeEvent, consoleMode: string, ...args: any[]) => {
         loggerWriter(consoleMode, ...args);
     });
-    ipcMain.handle('LiteLoader.markdown_it.get_log_path', (e: any) => LogPathHelper.getLogFolderPath());
+    ipcMain.handle('LiteLoader.markdown_it.get_log_path', (_event: IpcMainInvokeEvent) => LogPathHelper.getLogFolderPath());
 }
 
 // 这两个函数都是可选的

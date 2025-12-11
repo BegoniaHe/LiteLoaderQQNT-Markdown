@@ -82,6 +82,11 @@ export const useSettingsStore = create<SettingStateProperties & SettingStateActi
             updateSetting: (key, value) => {
                 set((state) => {
                     state[key] = value;
+                    // 安全策略：启用HTML实体完全反转义时，强制启用HTML净化
+                    // 防止XSS攻击风险
+                    if (key === 'unescapeAllHtmlEntites' && value === true) {
+                        state.enableHtmlPurify = true;
+                    }
                 })
             }
         }))),
