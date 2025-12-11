@@ -1,8 +1,8 @@
-import React from 'react';
-import {mditLogger} from "@/utils/logger";
-import {createRoot} from "react-dom/client";
-import {useSettingsStore} from "@/states/settings";
-import { CLASS_NAMES } from '@/config';
+import React from "react";
+import { mditLogger } from "@/utils/logger";
+import { createRoot } from "react-dom/client";
+import { useSettingsStore } from "@/states/settings";
+import { CLASS_NAMES } from "@/config";
 
 export interface ShowOriginalContentButtonProps {
     msgBox: HTMLElement;
@@ -16,14 +16,21 @@ export function ShowOriginalContentButton(props: ShowOriginalContentButtonProps)
             <button
                 className={CLASS_NAMES.SHOW_ORIGIN_BUTTON}
                 onClick={function () {
-                    mditLogger('info', 'ShowOriginalContent', 'Button clicked');
+                    mditLogger("info", "ShowOriginalContent", "Button clicked");
                     try {
                         props.msgBox.innerHTML = props.originalInnerHTML;
                     } catch (e) {
-                        mditLogger('error', 'ShowOriginalContent - Failed to replace content:', e);
-                        mditLogger('debug', 'ShowOriginalContent', 'Original HTML:', props.originalInnerHTML);
+                        mditLogger("error", "ShowOriginalContent - Failed to replace content:", e);
+                        mditLogger(
+                            "debug",
+                            "ShowOriginalContent",
+                            "Original HTML:",
+                            props.originalInnerHTML
+                        );
                     }
-                }}><p>Show Original</p>
+                }}
+            >
+                <p>Show Original</p>
             </button>
         </>
     );
@@ -34,16 +41,23 @@ export function ShowOriginalContentButton(props: ShowOriginalContentButtonProps)
  *
  * This function will respect user config. Will skip adding button if user config not to enable this feature.
  */
-export function addShowOriginButtonToMarkdownBody(markdownBody: HTMLElement, msgBox: HTMLElement, originalInnerHTML: string) {
+export function addShowOriginButtonToMarkdownBody(
+    markdownBody: HTMLElement,
+    msgBox: HTMLElement,
+    originalInnerHTML: string
+) {
     if (useSettingsStore.getState().showOriginalButton === false) {
         return;
     }
 
-    let _showOriginalButton = document.createElement('div');
-    let showOriginalButton = createRoot(_showOriginalButton);
-    showOriginalButton.render(<ShowOriginalContentButton
-        msgBox={msgBox}
-        originalInnerHTML={originalInnerHTML}
-        renderedInnerHTML={''}/>);
+    const _showOriginalButton = document.createElement("div");
+    const showOriginalButton = createRoot(_showOriginalButton);
+    showOriginalButton.render(
+        <ShowOriginalContentButton
+            msgBox={msgBox}
+            originalInnerHTML={originalInnerHTML}
+            renderedInnerHTML={""}
+        />
+    );
     markdownBody.appendChild(_showOriginalButton);
 }

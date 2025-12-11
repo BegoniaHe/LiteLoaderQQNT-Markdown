@@ -6,7 +6,7 @@ const rendererProcessConfig = {
             "@": path.resolve(__dirname, "src"),
         },
         // Explicitly resolve files with following extension as modules.
-        extensions: ['', '.js', '.jsx', '.ts', '.tsx'],
+        extensions: ['.js', '.jsx', '.ts', '.tsx'],
     },
     experiments: {
         outputModule: true,
@@ -60,7 +60,7 @@ const mainProcessConfig = {
             "@": path.resolve(__dirname, "src"),
         },
         // Explicitly resolve files with following extension as modules.
-        extensions: ['', '.js', '.jsx', '.ts', '.tsx'],
+        extensions: ['.js', '.jsx', '.ts', '.tsx'],
     },
     // experiments: {
     //     outputModule: true,
@@ -109,4 +109,50 @@ const mainProcessConfig = {
     },
 };
 
-module.exports = [rendererProcessConfig, mainProcessConfig];
+const preloadProcessConfig = {
+    resolve: {
+        alias: {
+            "@": path.resolve(__dirname, "src"),
+        },
+        extensions: ['.js', '.jsx', '.ts', '.tsx'],
+    },
+    target: 'electron-preload',
+    entry: "./src/preload.ts",
+    output: {
+        path: path.resolve(__dirname, "dist"),
+        filename: 'preload.js',
+    },
+    module: {
+        rules: [
+            {
+                test: /.(js|jsx)$/,
+                include: path.resolve(__dirname, "src"),
+                exclude: /node_modules/,
+                use: {
+                    loader: "babel-loader",
+                    options: {
+                        presets: [
+                            '@babel/preset-react',
+                        ],
+                    }
+                },
+            },
+            {
+                test: /.(ts|tsx)$/,
+                include: path.resolve(__dirname, "src"),
+                exclude: /node_modules/,
+                use: {
+                    loader: "babel-loader",
+                    options: {
+                        presets: [
+                            '@babel/preset-typescript',
+                            '@babel/preset-react',
+                        ],
+                    }
+                },
+            },
+        ],
+    },
+};
+
+module.exports = [rendererProcessConfig, mainProcessConfig, preloadProcessConfig];

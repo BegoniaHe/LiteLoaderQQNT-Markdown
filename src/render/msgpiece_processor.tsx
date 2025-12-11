@@ -1,34 +1,33 @@
 // markdown
-import React from 'react';
-import markdownIt from 'markdown-it';
-import { renderToString } from 'react-dom/server';
-import hljs from 'highlight.js';
-import katex from '@/lib/markdown-it-katex';
+import React from "react";
+import markdownIt from "markdown-it";
+import { renderToString } from "react-dom/server";
+import hljs from "highlight.js";
+import katex from "@/lib/markdown-it-katex";
 
 // markdown-it 高级功能插件
-import markdownItFootnote from 'markdown-it-footnote';
-import markdownItMark from 'markdown-it-mark';
-import markdownItSub from 'markdown-it-sub';
-import markdownItSup from 'markdown-it-sup';
-import { full as markdownItEmojiPlugin } from 'markdown-it-emoji';
-import markdownItDeflist from 'markdown-it-deflist';
-import markdownItInsert from 'markdown-it-ins';
-import markdownItAbbr from 'markdown-it-abbr';
+import markdownItFootnote from "markdown-it-footnote";
+import markdownItMark from "markdown-it-mark";
+import markdownItSub from "markdown-it-sub";
+import markdownItSup from "markdown-it-sup";
+import { full as markdownItEmojiPlugin } from "markdown-it-emoji";
+import markdownItDeflist from "markdown-it-deflist";
+import markdownItInsert from "markdown-it-ins";
+import markdownItAbbr from "markdown-it-abbr";
+import markdownItTaskLists from "markdown-it-task-lists";
 
 // Components
-import { HighLightedCodeBlock, renderInlineCodeBlockString } from '@/components/code_block';
+import { HighLightedCodeBlock, renderInlineCodeBlockString } from "@/components/code_block";
 
 // Settings
-import { useSettingsStore } from '@/states/settings';
+import { useSettingsStore } from "@/states/settings";
 
 // Utils
-import { escapeHtml, purifyHtml, unescapeHtml } from '@/utils/htmlProc';
-import { mditLogger } from '@/utils/logger';
+import { escapeHtml, purifyHtml, unescapeHtml } from "@/utils/htmlProc";
+import { mditLogger } from "@/utils/logger";
 
 // Config
-import { SELECTORS, CLASS_NAMES, MARKDOWN_CONFIG } from '@/config';
-
-
+import { SELECTORS, CLASS_NAMES, MARKDOWN_CONFIG } from "@/config";
 
 type ReplaceFunc = (parentElement: HTMLElement, id: string) => any;
 
@@ -47,7 +46,7 @@ let markdownItIns: markdownIt | undefined = undefined;
  */
 function resetMarkdownIns() {
     markdownItIns = undefined;
-    mditLogger('info', 'Markdown-it instance reset, will regenerate on next render');
+    mditLogger("info", "Markdown-it instance reset, will regenerate on next render");
 }
 
 /**
@@ -57,15 +56,23 @@ function initializeSettingsWatcher() {
     // 监听 linkify 和 typographer 设置的变化
     type MarkdownSettings = { linkify: boolean; typographer: boolean };
     useSettingsStore.subscribe(
-        (state: { linkify: boolean; typographer: boolean }) => ({ linkify: state.linkify, typographer: state.typographer }),
+        (state: { linkify: boolean; typographer: boolean }) => ({
+            linkify: state.linkify,
+            typographer: state.typographer,
+        }),
         (newSettings: MarkdownSettings, prevSettings: MarkdownSettings) => {
-            if (newSettings.linkify !== prevSettings.linkify || 
-                newSettings.typographer !== prevSettings.typographer) {
-                mditLogger('info', 'Markdown-it settings changed, resetting instance');
+            if (
+                newSettings.linkify !== prevSettings.linkify ||
+                newSettings.typographer !== prevSettings.typographer
+            ) {
+                mditLogger("info", "Markdown-it settings changed, resetting instance");
                 resetMarkdownIns();
             }
         },
-        { equalityFn: (a: MarkdownSettings, b: MarkdownSettings) => a.linkify === b.linkify && a.typographer === b.typographer }
+        {
+            equalityFn: (a: MarkdownSettings, b: MarkdownSettings) =>
+                a.linkify === b.linkify && a.typographer === b.typographer,
+        }
     );
 }
 
@@ -80,7 +87,7 @@ function getMarkdownIns() {
     if (markdownItIns !== undefined) {
         return markdownItIns;
     }
-    mditLogger('info', 'Generating new markdown-it renderer...');
+    mditLogger("info", "Generating new markdown-it renderer...");
     const localMarkdownItIns = markdownIt({
         html: true, // 在源码中启用 HTML 标签
         xhtmlOut: true, // 使用 '/' 来闭合单标签 （比如 <br />）。
@@ -97,35 +104,40 @@ function getMarkdownIns() {
 
         // custom highlight UI renderer for markdown it.
         highlight: function (str: string, lang: string) {
-            return (renderToString(<HighLightedCodeBlock content={str} lang={lang}
-                markdownItIns={localMarkdownItIns} />));
+            return renderToString(
+                <HighLightedCodeBlock
+                    content={str}
+                    lang={lang}
+                    markdownItIns={localMarkdownItIns}
+                />
+            );
         },
     })
-    // 数学公式支持
-    .use(katex)
-    // 脚注支持 [^1]
-    .use(markdownItFootnote)
-    // 高亮文本 ==marked==
-    .use(markdownItMark)
-    // 下标 H~2~O
-    .use(markdownItSub)
-    // 上标 X^2^
-    .use(markdownItSup)
-    // 表情符号 :smile:
-    .use(markdownItEmojiPlugin)
-    // 定义列表
-    .use(markdownItDeflist)
-    // 插入文本 ++inserted++
-    .use(markdownItInsert)
-    // 缩写定义
-    .use(markdownItAbbr);
-    
+        // 数学公式支持
+        .use(katex)
+        // 脚注支持 [^1]
+        .use(markdownItFootnote)
+        // 高亮文本 ==marked==
+        .use(markdownItMark)
+        // 下标 H~2~O
+        .use(markdownItSub)
+        // 上标 X^2^
+        .use(markdownItSup)
+        // 表情符号 :smile:
+        .use(markdownItEmojiPlugin)
+        // 定义列表
+        .use(markdownItDeflist)
+        // 插入文本 ++inserted++
+        .use(markdownItInsert)
+        // 缩写定义
+        .use(markdownItAbbr)
+        // 任务列表 [ ] [x]
+        .use(markdownItTaskLists, { enabled: true });
+
     localMarkdownItIns.renderer.rules.code_inline = renderInlineCodeBlockString;
     markdownItIns = localMarkdownItIns;
     return localMarkdownItIns;
 }
-
-
 
 /**
  * Function type that used to process children elements inside QQNT message box.
@@ -133,9 +145,8 @@ function getMarkdownIns() {
 type FragmentProcessFunc = (
     parent: HTMLElement,
     element: HTMLElement,
-    index: number,
+    index: number
 ) => FragmentProcessFuncRetType | undefined;
-
 
 interface FragmentProcessFuncRetType {
     original: HTMLElement;
@@ -144,18 +155,18 @@ interface FragmentProcessFuncRetType {
 
 /**
  * Message fragment processor that deal with all text span in messages.
- * @param element 
- * @returns 
+ * @param element
+ * @returns
  */
 const textElementProcessor: FragmentProcessFunc = (parent, element, index) => {
     // text processor
-    let settings = useSettingsStore.getState();
+    const settings = useSettingsStore.getState();
 
     // generate rendered HTML processor based on user config.
     function renderedHtmlPostProcessor(x: string): string {
         // text processor
         if ((settings.forceEnableHtmlPurify() ?? settings.enableHtmlPurify) === true) {
-            mditLogger('debug', `Purify`, 'Input:', `${x}`);
+            mditLogger("debug", `Purify`, "Input:", `${x}`);
             return purifyHtml(x) as string;
         }
 
@@ -163,15 +174,16 @@ const textElementProcessor: FragmentProcessFunc = (parent, element, index) => {
     }
 
     // filter to only process pure text messages fragments
-    if (!(element.tagName == 'SPAN')
-        || !element.classList.contains(SELECTORS.TEXT_ELEMENT)
-        || element.querySelector(SELECTORS.AT_ELEMENT)) {
+    if (
+        !(element.tagName == "SPAN") ||
+        !element.classList.contains(SELECTORS.TEXT_ELEMENT) ||
+        element.querySelector(SELECTORS.AT_ELEMENT)
+    ) {
         return undefined;
     }
 
-    mditLogger('debug', 'ElementMatch', 'Source', element);
-    mditLogger('debug', 'Element', 'Match', 'spanTextProcessor');
-
+    mditLogger("debug", "ElementMatch", "Source", element);
+    mditLogger("debug", "Element", "Match", "spanTextProcessor");
 
     // entity processor
     // determine the HTML enetity escape behaviour based on user settings
@@ -179,85 +191,122 @@ const textElementProcessor: FragmentProcessFunc = (parent, element, index) => {
         if (settings.unescapeAllHtmlEntites == true) {
             return unescapeHtml(x);
         }
-        
+
         let result = x;
         // 总是反转义安全的 HTML 标签，即使未启用完全反转义
         // 这些标签在 DOMPurify 白名单中，是安全的
         const safeTags = [
             // 块级标签
-            'div', 'p', 'blockquote', 'section',
+            "div",
+            "p",
+            "blockquote",
+            "section",
             // 格式化标签
-            'kbd', 'mark', 'sub', 'sup', 'ins', 'del', 'small',
-            'strong', 'em', 'b', 'i', 'u', 's',
+            "kbd",
+            "mark",
+            "sub",
+            "sup",
+            "ins",
+            "del",
+            "small",
+            "strong",
+            "em",
+            "b",
+            "i",
+            "u",
+            "s",
             // 链接
-            'a',
+            "a",
             // 交互标签
-            'details', 'summary',
+            "details",
+            "summary",
             // 列表和表格
-            'ul', 'ol', 'li', 'dl', 'dt', 'dd',
-            'table', 'thead', 'tbody', 'tr', 'th', 'td',
+            "ul",
+            "ol",
+            "li",
+            "dl",
+            "dt",
+            "dd",
+            "table",
+            "thead",
+            "tbody",
+            "tr",
+            "th",
+            "td",
         ];
-        safeTags.forEach(tag => {
+        safeTags.forEach((tag) => {
             const openTagEscaped = `&lt;${tag}&gt;`;
             const closeTagEscaped = `&lt;/${tag}&gt;`;
             // 匹配带属性的标签，支持属性中的 HTML 实体（如 &amp; &quot;）
-            const openTagEscapedWithAttrs = new RegExp(`&lt;${tag}\\s+[^>]*?&gt;`, 'gi');
-            
+            const openTagEscapedWithAttrs = new RegExp(`&lt;${tag}\\s+[^>]*?&gt;`, "gi");
+
             result = result.replaceAll(openTagEscaped, `<${tag}>`);
             result = result.replaceAll(closeTagEscaped, `</${tag}>`);
             result = result.replace(openTagEscapedWithAttrs, (match) => {
-                return match.replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+                return match.replace(/&lt;/g, "<").replace(/&gt;/g, ">");
             });
         });
-        
+
         if (settings.unescapeGtInText == true) {
-            result = result.replaceAll('&gt;', '>');
+            result = result.replaceAll("&gt;", ">");
         }
-        
+
         return result;
     }
 
     // get all text in this text span
-    let originalText = Array.from(element.getElementsByTagName("span"))
+    const originalText = Array.from(element.getElementsByTagName("span"))
         .map((element) => element.innerHTML)
-        .reduce((acc, x) => acc + entityProcesor(x), '');
+        .reduce((acc, x) => acc + entityProcesor(x), "");
 
     // render
-    let renderedTextElement = element;
-    let renderedMarkdownInnerHtml = (
+    const renderedTextElement = element;
+    let renderedMarkdownInnerHtml =
         // first use markdownit to render the html text
         // then passed to post processor (post processor also accept text)
-        renderedHtmlPostProcessor(getMarkdownIns().render(originalText)).trim()
-    );
-    mditLogger('debug', 'Rendered/post-processed HTML innterText:', renderedMarkdownInnerHtml);
+        renderedHtmlPostProcessor(getMarkdownIns().render(originalText)).trim();
+    mditLogger("debug", "Rendered/post-processed HTML innterText:", renderedMarkdownInnerHtml);
 
     // remove unnecessary wrapping <p> if there is only one element
-    let renderedHtmlElement = (new DOMParser).parseFromString(renderedMarkdownInnerHtml, 'text/html');
-    mditLogger('debug', 'renderedHtmlElement.body.children.length==1', renderedHtmlElement.body.children.length == 1);
-    mditLogger('debug', 'renderedMarkdownInnerHtml.startsWith(p)', renderedMarkdownInnerHtml.startsWith('<p>'));
-    mditLogger('debug', 'renderedMarkdownInnerHtml.endsWith(p)', renderedMarkdownInnerHtml.endsWith('</p>'));
-    if ((renderedHtmlElement.body.children.length == 1)
-        && renderedMarkdownInnerHtml.startsWith('<p>')
-        && renderedMarkdownInnerHtml.endsWith('</p>')) {
-        renderedMarkdownInnerHtml =
-            renderedMarkdownInnerHtml
-                .substring(3, renderedMarkdownInnerHtml.length - 4)
-                .trim();
-        mditLogger('debug', 'Striped innerHTML:', renderedMarkdownInnerHtml);
+    const renderedHtmlElement = new DOMParser().parseFromString(
+        renderedMarkdownInnerHtml,
+        "text/html"
+    );
+    mditLogger(
+        "debug",
+        "renderedHtmlElement.body.children.length==1",
+        renderedHtmlElement.body.children.length == 1
+    );
+    mditLogger(
+        "debug",
+        "renderedMarkdownInnerHtml.startsWith(p)",
+        renderedMarkdownInnerHtml.startsWith("<p>")
+    );
+    mditLogger(
+        "debug",
+        "renderedMarkdownInnerHtml.endsWith(p)",
+        renderedMarkdownInnerHtml.endsWith("</p>")
+    );
+    if (
+        renderedHtmlElement.body.children.length == 1 &&
+        renderedMarkdownInnerHtml.startsWith("<p>") &&
+        renderedMarkdownInnerHtml.endsWith("</p>")
+    ) {
+        renderedMarkdownInnerHtml = renderedMarkdownInnerHtml
+            .substring(3, renderedMarkdownInnerHtml.length - 4)
+            .trim();
+        mditLogger("debug", "Striped innerHTML:", renderedMarkdownInnerHtml);
     }
 
     renderedTextElement.innerHTML = renderedMarkdownInnerHtml;
-
 
     return {
         original: element,
         rendered: renderedTextElement,
     };
-}
+};
 
 /**
  * Triggered from begin to end, preemptive.
  */
-export const processorList: FragmentProcessFunc[] = [
-    textElementProcessor,
-];
+export const processorList: FragmentProcessFunc[] = [textElementProcessor];

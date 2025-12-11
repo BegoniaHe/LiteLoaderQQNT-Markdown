@@ -2,11 +2,11 @@
  * Contains util functions about logger.
  */
 
-import { useSettingsStore } from '@/states/settings';
+import { useSettingsStore } from "@/states/settings";
 
 declare const markdown_it: {
-    log: (consoleType: string, ...args: unknown[]) => Promise<void>
-    get_log_path: () => Promise<string>
+    log: (consoleType: string, ...args: unknown[]) => Promise<void>;
+    get_log_path: () => Promise<string>;
 };
 
 type DistributiveFilter<Origin, Filter> = Origin extends Filter ? Origin : never;
@@ -20,10 +20,13 @@ type LoggerFuncKey = {
 
 /**
  * String literal unions of the supported logger function type.
- * 
+ *
  * `DistributiveFilter` will filtered out all options that actually not a valid function of console.
  */
-export type SupportedLoggerFuncKey = DistributiveFilter<LoggerFuncKey, 'debug' | 'log' | 'info' | 'warn' | 'error'>;
+export type SupportedLoggerFuncKey = DistributiveFilter<
+    LoggerFuncKey,
+    "debug" | "log" | "info" | "warn" | "error"
+>;
 
 function outputToConsoleSettingEnabled() {
     return useSettingsStore.getState().consoleOutput;
@@ -47,30 +50,30 @@ export interface MditLoggerOptions {
 const defaultMditLoggerOptions: MditLoggerOptions = {
     consoleOutput: true,
     fileOutput: true,
-}
+};
 
 /**
- * Logger function generator. Could generate log functions based on some configurations to 
+ * Logger function generator. Could generate log functions based on some configurations to
  * fit different use cases.
  * @param options `MditLoggerOptions`
  */
-export function mditLoggerGenerator(options: MditLoggerOptions = defaultMditLoggerOptions):
-    (consoleFunction: SupportedLoggerFuncKey, ...params: unknown[]) => (undefined) {
+export function mditLoggerGenerator(
+    options: MditLoggerOptions = defaultMditLoggerOptions
+): (consoleFunction: SupportedLoggerFuncKey, ...params: unknown[]) => undefined {
     return function (consoleFunction: SupportedLoggerFuncKey, ...params: unknown[]) {
-
         // if user enabled console output in settings, and the console output config of this logger is on
         if (outputToConsoleSettingEnabled() && options.consoleOutput) {
             console[consoleFunction](
-                '%c [MarkdownIt] ',
-                'background-color: rgba(0, 149, 204, 0.8); border-radius: 6px;padding-block: 2px; padding-inline: 0px; color: white;',
-                ...params);
+                "%c [MarkdownIt] ",
+                "background-color: rgba(0, 149, 204, 0.8); border-radius: 6px;padding-block: 2px; padding-inline: 0px; color: white;",
+                ...params
+            );
         }
 
         try {
             if (outputToFileSettingEnabled() && options.fileOutput) {
-
-                let serializedParams = params.map((param) => {
-                    if (typeof param !== 'string') {
+                const serializedParams = params.map((param) => {
+                    if (typeof param !== "string") {
                         return JSON.stringify(param);
                     }
                     return param;
@@ -80,38 +83,39 @@ export function mditLoggerGenerator(options: MditLoggerOptions = defaultMditLogg
             }
         } catch (e) {
             // 静默失败，避免日志系统本身的错误影响主功能
-            console.error('[MarkdownIt] Logger error:', e);
+            console.error("[MarkdownIt] Logger error:", e);
         }
 
         return undefined;
-    }
+    };
 }
 
 /**
  * Markdown it console output wrapper.
- * 
+ *
  * @param consoleFunction The name of the member function you want to use in `console`. For exmaple: `'debug'` or `'info'`
  * @param params Params that passed to `console` function.
- * 
- * @example 
- * 
+ *
+ * @example
+ *
  * ```js
  * mditLogger('debug', 'This is a debug message', {name: 'Jobs', age: 17});
  * ```
  */
 export const mditLogger = mditLoggerGenerator();
 
-
-const loggedClassName = '--mdit-debug-capture-element-logged';
-const logFlagClassName = '--mdit-debug-capture-element';
+const loggedClassName = "--mdit-debug-capture-element-logged";
+const logFlagClassName = "--mdit-debug-capture-element";
 
 export function elementDebugLogger() {
-    var enabled = useSettingsStore.getState().enableElementCapture;
+    const enabled = useSettingsStore.getState().enableElementCapture;
     if (!enabled) {
         return;
     }
-    mditLogger('info', 'ElementCapture triggered');
-    var codeEle = document.querySelectorAll('div.message-content__wrapper div.container--self code');
+    mditLogger("info", "ElementCapture triggered");
+    const codeEle = document.querySelectorAll(
+        "div.message-content__wrapper div.container--self code"
+    );
 
     // Add flag class for all marked --mdit-debug-capture-element
     Array.from(codeEle)
@@ -121,24 +125,25 @@ export function elementDebugLogger() {
         });
 
     // find all self sent message box that has been marked to capture, then log it.
-    var flaggedMsgBoxs = document.querySelectorAll(`div.message-content__wrapper div.container--self:has(.${logFlagClassName})`);
+    const flaggedMsgBoxs = document.querySelectorAll(
+        `div.message-content__wrapper div.container--self:has(.${logFlagClassName})`
+    );
 
-    var loggedCount = 0;
-    Array
-        .from(flaggedMsgBoxs)
+    let loggedCount = 0;
+    Array.from(flaggedMsgBoxs)
         .filter((ele) => !ele.classList.contains(loggedClassName)) // ensure one message box will only be logged one time
         .forEach((ele) => {
             // file-only logger
             mditLoggerGenerator({
                 ...defaultMditLoggerOptions,
                 consoleOutput: false,
-            })('log', ele.outerHTML);
+            })("log", ele.outerHTML);
 
-            mditLogger('debug', `Element captured: ${ele.tagName}`);
+            mditLogger("debug", `Element captured: ${ele.tagName}`);
 
             ele.classList.add(loggedClassName);
             loggedCount++;
         });
 
-    mditLogger('info', 'Element Capture Finished:', `${loggedCount} element(s) has been logged`);
+    mditLogger("info", "Element Capture Finished:", `${loggedCount} element(s) has been logged`);
 }

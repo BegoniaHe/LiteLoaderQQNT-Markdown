@@ -1,8 +1,8 @@
-import { create } from 'zustand';
-import { immer } from 'zustand/middleware/immer';
+import { create } from "zustand";
+import { immer } from "zustand/middleware/immer";
 
-import { persist, createJSONStorage, subscribeWithSelector } from 'zustand/middleware';
-import { LiteLoaderStorage } from '@/utils/liteloader_config';
+import { persist, createJSONStorage, subscribeWithSelector } from "zustand/middleware";
+import { LiteLoaderStorage } from "@/utils/liteloader_config";
 
 export interface SettingStateProperties {
     // Boolean properties
@@ -35,7 +35,6 @@ export interface SettingStateAction {
     updateSetting(key: keyof SettingStateProperties, value: boolean): void;
 }
 
-
 /**
  * forcefieldName() method is used to return the value indicating the setting
  * `fieldName` is forced to that value despite the value stored in state.
@@ -45,54 +44,72 @@ export interface SettingStateAction {
  */
 export const useSettingsStore = create<SettingStateProperties & SettingStateAction>()(
     persist(
-        immer(subscribeWithSelector((set, get) => ({
-            linkify: true,
-            typographer: false,
-            codeHighligtThemeFollowSystem: true,
+        immer(
+            subscribeWithSelector((set, get) => ({
+                linkify: true,
+                typographer: false,
+                codeHighligtThemeFollowSystem: true,
 
-            // HTML related
-            unescapeAllHtmlEntites: false,
-            enableHtmlPurify: false,
+                // HTML related
+                unescapeAllHtmlEntites: false,
+                enableHtmlPurify: false,
 
-            // HTML escape settings
-            unescapeGtInText: true,
-            unescapeBeforeHighlight: true,
+                // HTML escape settings
+                unescapeGtInText: true,
+                unescapeBeforeHighlight: true,
 
-            // Debug settings
-            consoleOutput: true,
-            fileOutput: true,
-            enableElementCapture: false,
-            showOriginalButton: false,
+                // Debug settings
+                consoleOutput: true,
+                fileOutput: true,
+                enableElementCapture: false,
+                showOriginalButton: false,
 
-
-            forceUnescapeBeforeHighlight: () => {
-                if (get().unescapeAllHtmlEntites === true) {
-                    return false;
-                }
-                return undefined;
-            },
-
-            forceEnableHtmlPurify: () => {
-                if (get().unescapeAllHtmlEntites === true) {
-                    return true;
-                }
-                return undefined;
-            },
-
-            updateSetting: (key, value) => {
-                set((state) => {
-                    state[key] = value;
-                    // 安全策略：启用HTML实体完全反转义时，强制启用HTML净化
-                    // 防止XSS攻击风险
-                    if (key === 'unescapeAllHtmlEntites' && value === true) {
-                        state.enableHtmlPurify = true;
+                forceUnescapeBeforeHighlight: () => {
+                    if (get().unescapeAllHtmlEntites === true) {
+                        return false;
                     }
-                })
-            }
-        }))),
+                    return undefined;
+                },
+
+                forceEnableHtmlPurify: () => {
+                    if (get().unescapeAllHtmlEntites === true) {
+                        return true;
+                    }
+                    return undefined;
+                },
+
+                updateSetting: (key, value) => {
+                    // 类型和有效性检查
+                    if (!(key in get())) {
+                        console.error(`[Settings] Invalid setting key: ${key}`);
+                        return;
+                    }
+                    if (typeof value !== "boolean") {
+                        console.error(
+                            `[Settings] Invalid value type for ${key}: expected boolean, got ${typeof value}`
+                        );
+                        return;
+                    }
+
+                    set((state) => {
+                        state[key] = value;
+
+                        // 安全策略：HTML净化和反转义的双向约束
+                        // 防止XSS攻击风险
+                        if (key === "unescapeAllHtmlEntites" && value === true) {
+                            // 启用完全反转义时，强制启用HTML净化
+                            state.enableHtmlPurify = true;
+                        } else if (key === "enableHtmlPurify" && value === false) {
+                            // 禁用HTML净化时，强制禁用完全反转义
+                            state.unescapeAllHtmlEntites = false;
+                        }
+                    });
+                },
+            }))
+        ),
         {
-            name: 'settings',
+            name: "settings",
             storage: LiteLoaderStorage,
         }
-    ),
-)
+    )
+);

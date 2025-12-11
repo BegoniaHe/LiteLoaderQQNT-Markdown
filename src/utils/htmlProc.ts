@@ -1,89 +1,140 @@
 // Utils function about HTML string process
 
 import { mditLogger } from "./logger";
-import DOMPurify from 'dompurify';
-
-interface UponSanitizeDataRecv {
-    tagName: string;
-    allowedTags: Record<string, boolean>;
-}
+import DOMPurify from "dompurify";
+import he from "he";
 
 /**
  * DOMPurify Hook: 将不允许的HTML标签转换为纯文本显示
- * 
+ *
  * 安全说明：
  * - 此Hook在DOMPurify净化过程中执行，将不在白名单中的标签转为<p>元素
  * - 使用textContent确保标签名以纯文本形式显示，防止任何潜在的HTML注入
  * - 这是防御深度策略的一部分：即使有标签绕过了初始净化，也会被转为纯文本
  */
-DOMPurify.addHook('uponSanitizeElement', function (node: HTMLElement, data: UponSanitizeDataRecv) {
-    if (data.allowedTags[data.tagName] === true) {
+DOMPurify.addHook("uponSanitizeElement" as any, function (node: Element, data: any) {
+    if (data.allowedTags && data.allowedTags[data.tagName] === true) {
         return;
     }
-    const newNode = document.createElement('p');
+    const newNode = document.createElement("p");
     // 使用textContent而非outerHTML，仅保留标签名信息作为纯文本
     newNode.textContent = `<${data.tagName}>`;
     node.replaceWith(newNode);
 });
 
 /**
- * Unescape HTML entities in HTML string. Already unescaped HTML tag string will be ignored and not shown 
- * in return string.
- * @param {string} input 
- * @returns {string} String with all HTML entities unescaped
+ * Unescape HTML entities in HTML string using he.js library.
+ *
+ * 安全说明：
+ * - 使用 he.js 库进行 HTML 实体解码，避免 DOMParser 可能的安全风险
+ * - he.js 是纯文本处理，不会执行任何 HTML/JavaScript
+ * - 解码后的内容仍需经过 DOMPurify 净化才能安全渲染
+ *
+ * @param {string} input - 包含 HTML 实体的字符串
+ * @returns {string} 解码后的字符串
  */
-export function unescapeHtml(input: string) {
-    var doc = new DOMParser().parseFromString(input, "text/html");
-    return doc.documentElement.textContent;
+export function unescapeHtml(input: string): string {
+    return he.decode(input);
 }
 
 export function escapeHtml(input: string) {
     return input
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#039;');
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
 }
 
 /**
  * Using DOMPurify to purify HTML
- * @param {string} input 
+ * @param {string} input
  * @return {string} Purified HTML string.
  */
 export function purifyHtml(input: string) {
-    let res = DOMPurify.sanitize(input, {
+    const res = DOMPurify.sanitize(input, {
         // 允许的标签白名单 - 扩展以支持更多 Markdown 功能
         ALLOWED_TAGS: [
             // 基础标签
-            'p', 'br', 'span', 'div', 'a', 'code', 'pre',
+            "p",
+            "br",
+            "span",
+            "div",
+            "a",
+            "code",
+            "pre",
             // 格式化标签
-            'strong', 'em', 'u', 's', 'b', 'i', 'mark', 'ins', 'del', 'sub', 'sup', 'small', 'kbd',
+            "strong",
+            "em",
+            "u",
+            "s",
+            "b",
+            "i",
+            "mark",
+            "ins",
+            "del",
+            "sub",
+            "sup",
+            "small",
+            "kbd",
             // 列表
-            'ul', 'ol', 'li', 'dl', 'dt', 'dd',
+            "ul",
+            "ol",
+            "li",
+            "dl",
+            "dt",
+            "dd",
             // 标题
-            'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+            "h1",
+            "h2",
+            "h3",
+            "h4",
+            "h5",
+            "h6",
             // 引用和分隔
-            'blockquote', 'hr',
+            "blockquote",
+            "hr",
             // 表格
-            'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td', 'caption',
+            "table",
+            "thead",
+            "tbody",
+            "tfoot",
+            "tr",
+            "th",
+            "td",
+            "caption",
             // 交互元素
-            'details', 'summary',
+            "details",
+            "summary",
+            "input",
         ],
         // 允许的属性白名单
         ALLOWED_ATTR: [
-            'class', 'id', 'style', 'href', 'title', 'alt',
-            'data-footnote-id', 'data-footnote-backref',
-            'aria-label', 'aria-hidden',
-            'open',  // details 标签
-            'target', 'rel',  // 链接属性
-            'colspan', 'rowspan',  // 表格属性
+            "class",
+            "id",
+            "style",
+            "href",
+            "title",
+            "alt",
+            "data-footnote-id",
+            "data-footnote-backref",
+            "aria-label",
+            "aria-hidden",
+            "open",
+            "target",
+            "rel",
+            "colspan",
+            "rowspan",
+            "type",
+            "checked",
+            "disabled",
         ],
-        // 允许 data 属性（用于脚注等功能）
+        // 允许 data 属性
         ALLOW_DATA_ATTR: true,
         // 保持安全的 URI 协议
-        ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
+        ALLOWED_URI_REGEXP:
+            /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
     });
-    mditLogger('debug', 'Purify', 'Removed', DOMPurify.removed);
+    mditLogger("debug", "Purify", "Removed", DOMPurify.removed);
     return res;
 }

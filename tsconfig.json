@@ -1,6 +1,5 @@
 {
     "compilerOptions": {
-        "baseUrl": "./",
         "paths": {
             "@/*": [
                 "./src/*"
@@ -13,8 +12,15 @@
         "target": "ES2021",
         "module": "NodeNext",
         "moduleResolution": "NodeNext",
+        "strict": true,
+        "forceConsistentCasingInFileNames": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "resolveJsonModule": true,
+        "types": ["node"]
     },
     "exclude": [
-        "./dist/**/*" // This is what fixed it!
+        "./dist/**/*",
+        "node_modules"
     ]
 }

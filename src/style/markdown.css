@@ -52,7 +52,7 @@
 
 .message-content th,
 td {
-    border: 1px solid rgba(150, 150, 200, .3);
+    border: 1px solid rgba(150, 150, 200, 0.3);
     padding: 8px;
 }
 
@@ -62,7 +62,7 @@ span.katex-html {
 
 blockquote {
     padding: 0 1em;
-    border-left: .25em solid #dfe2e5;
+    border-left: 0.25em solid #dfe2e5;
 }
 
 @media (prefers-color-scheme: light) {
@@ -94,14 +94,14 @@ blockquote {
 }
 
 code {
-    font-family: 'Fira Code', Consolas, 'Courier New', monospace;
+    font-family: "Fira Code", Consolas, "Courier New", monospace;
 }
 
 em {
     font-style: italic;
 }
 
-span>p>img {
+span > p > img {
     max-width: 100%;
     height: auto;
 }
@@ -116,8 +116,8 @@ div.katex-block-rendered {
 }
 
 /* language and copy button style */
-pre.hl-code-block>button.lang_copy,
-div.katex-block-rendered>button.copy_latex {
+pre.hl-code-block > button.lang_copy,
+div.katex-block-rendered > button.copy_latex {
     z-index: 10;
     position: absolute;
     right: 2px;
@@ -127,47 +127,46 @@ div.katex-block-rendered>button.copy_latex {
     backdrop-filter: blur(8px);
     border-radius: 4px;
     border-width: 0px;
-    box-shadow: 3px 10px 15px -3px rgb(0 0 0 / 0.1), 2px 4px 6px -6px rgb(0 0 0 / 0.1);
+    box-shadow:
+        3px 10px 15px -3px rgb(0 0 0 / 0.1),
+        2px 4px 6px -6px rgb(0 0 0 / 0.1);
 
     transition-property: all;
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     transition-duration: 20ms;
 }
 
-pre.hl-code-block>button.lang_copy:active,
-div.katex-block-rendered>button.copy_latex:active {
+pre.hl-code-block > button.lang_copy:active,
+div.katex-block-rendered > button.copy_latex:active {
     transform: scale(0.85);
 }
 
-
 @media (prefers-color-scheme: light) {
-
-    pre.hl-code-block>button.lang_copy,
-    div.katex-block-rendered>button.copy_latex {
+    pre.hl-code-block > button.lang_copy,
+    div.katex-block-rendered > button.copy_latex {
         background-color: rgba(255, 255, 255, 0.5);
         color: black;
     }
 }
 
 @media (prefers-color-scheme: dark) {
-
-    pre.hl-code-block>button.lang_copy,
-    div.katex-block-rendered>button.copy_latex {
+    pre.hl-code-block > button.lang_copy,
+    div.katex-block-rendered > button.copy_latex {
         background-color: rgba(0, 0, 0, 0.5);
         color: white;
     }
 }
 
-pre.hl-code-block:not(:hover)>button.lang_copy,
-div.katex-block-rendered:not(:hover)>button.copy_latex {
+pre.hl-code-block:not(:hover) > button.lang_copy,
+div.katex-block-rendered:not(:hover) > button.copy_latex {
     display: none;
 }
 
-pre.hl-code-block>button.lang_copy:hover>p.lang {
+pre.hl-code-block > button.lang_copy:hover > p.lang {
     display: none;
 }
 
-pre.hl-code-block>button.lang_copy:not(:hover)>p.copy {
+pre.hl-code-block > button.lang_copy:not(:hover) > p.copy {
     display: none;
 }
 
@@ -177,8 +176,7 @@ pre.hl-code-block>button.lang_copy:not(:hover)>p.copy {
     flex-direction: row;
 } */
 
-
-.mix-message__inner>.text-element>p+p {
+.mix-message__inner > .text-element > p + p {
     padding-top: 14px;
 }
 
@@ -195,7 +193,7 @@ button.mdit-show-origin-button {
     border-width: 0px;
 }
 
-pre.mdit-fenced-code-block>code {
+pre.mdit-fenced-code-block > code {
     width: 100%;
     display: block;
     overflow-y: auto;
@@ -203,7 +201,7 @@ pre.mdit-fenced-code-block>code {
 }
 
 @media (prefers-color-scheme: dark) {
-    pre.mdit-fenced-code-block>code {
+    pre.mdit-fenced-code-block > code {
         color-scheme: dark;
     }
 }
@@ -304,22 +302,6 @@ pre.mdit-fenced-code-block>code {
     outline: none;
 }
 
-.message-content summary::-webkit-details-marker {
-    display: none;
-}
-
-.message-content summary::before {
-    content: '▶';
-    display: inline-block;
-    margin-right: 0.5em;
-    transition: transform 0.2s ease;
-    font-size: 0.8em;
-}
-
-.message-content details[open] > summary::before {
-    transform: rotate(90deg);
-}
-
 .message-content details[open] {
     padding-bottom: 1em;
 }
@@ -352,7 +334,7 @@ pre.mdit-fenced-code-block>code {
         background-color: #2ea043;
         color: #fff;
     }
-    
+
     .message-content del {
         background-color: #da3633;
         color: #fff;
@@ -387,15 +369,16 @@ pre.mdit-fenced-code-block>code {
 .message-content kbd {
     display: inline-block;
     padding: 0.2em 0.5em;
-    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-family: "Consolas", "Monaco", "Courier New", monospace;
     font-size: 0.85em;
     line-height: 1.4;
     color: #24292f;
     background-color: #f6f8fa;
     border: 1px solid #d0d7de;
     border-radius: 6px;
-    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.1),
-                inset 0 0 0 1px #fff;
+    box-shadow:
+        0 2px 0 rgba(0, 0, 0, 0.1),
+        inset 0 0 0 1px #fff;
     white-space: nowrap;
     vertical-align: middle;
 }
@@ -405,8 +388,9 @@ pre.mdit-fenced-code-block>code {
         color: #e6edf3;
         background-color: #161b22;
         border-color: #30363d;
-        box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3),
-                    inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+        box-shadow:
+            0 2px 0 rgba(0, 0, 0, 0.3),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.05);
     }
 }
 
@@ -415,6 +399,31 @@ pre.mdit-fenced-code-block>code {
     height: 1.2em;
     width: 1.2em;
     vertical-align: -0.2em;
+}
+
+/* 任务列表 (task lists) */
+.message-content ul.contains-task-list,
+.message-content ol.contains-task-list {
+    list-style: none;
+    padding-left: 1.5em;
+}
+
+.message-content .task-list-item {
+    list-style: none;
+    position: relative;
+    margin: 0.25em 0;
+}
+
+.message-content .task-list-item-checkbox {
+    margin: 0 0.5em 0 0;
+    vertical-align: middle;
+    cursor: default;
+    pointer-events: none;
+}
+
+.message-content .task-list-item > p {
+    display: inline;
+    margin: 0;
 }
 
 /* 确保内联元素不破坏布局 */
@@ -435,7 +444,7 @@ pre.mdit-fenced-code-block>code {
     .message-content dt {
         color: var(--text-color-primary, #e6edf3);
     }
-    
+
     .message-content dd {
         border-left-color: var(--border-color, #30363d);
     }
