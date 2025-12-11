@@ -1,13 +1,13 @@
 import * as path from 'path';
 import { existsSync, mkdirSync, rmSync, createWriteStream } from 'fs';
-import { writeFile } from 'fs/promises';
 import { LiteLoaderInterFace } from '@/utils/liteloader_type';
+import { PLUGIN_CONFIG } from '@/config';
 
 declare const LiteLoader: LiteLoaderInterFace<Object>;
 
 export const LogPathHelper = {
     getLogFolderPath() {
-        return path.join(LiteLoader.plugins.markdown_it.path.data, 'log');
+        return path.join(LiteLoader.plugins.markdown_it.path.data, PLUGIN_CONFIG.LOG_FOLDER);
     },
 
     /**
@@ -38,7 +38,7 @@ export function generateMainProcessLogerWriter() {
     try {
         rmSync(logFolderPath, { recursive: true });
     } catch (e) {
-        console.error('[markdown-it] Failed to remove previous log file');
+        console.error('[markdown-it] Failed to remove previous log file:', e);
     }
 
     // create dir if not exists
@@ -47,22 +47,28 @@ export function generateMainProcessLogerWriter() {
             mkdirSync(logFolderPath, { recursive: true });
         }
     } catch (err) {
-        console.error('[markdown-it] Failed to create log directory');
-        return undefined;
+        console.error('[markdown-it] Failed to create log directory:', err);
+        // 返回一个空函数，避免后续调用出错
+        return () => Promise.resolve();
     }
 
     var stream = createWriteStream(logFilePath, {
         flags: 'a+',
     })
 
-    return async function (consoleMode: string, ...args: any[]) {
+    return async function (consoleMode: string, ...args: unknown[]) {
         var timeStr = new Date().toISOString();
 
-        var argsStr = args.reduce(function (str, value) {
+        var argsStr = args.reduce(function (str: string, value: unknown) {
             if (typeof value === 'string') {
                 return str + value + ' ';
             }
-            return str + JSON.stringify(value) + ' ';
+            try {
+                return str + JSON.stringify(value) + ' ';
+            } catch (e) {
+                // 处理循环引用等无法序列化的情况
+                return str + String(value) + ' ';
+            }
         }, '');
 
         var logStr = `${consoleMode.toUpperCase()} | ${timeStr} | ${argsStr}`;

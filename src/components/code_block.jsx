@@ -4,6 +4,7 @@ import hljs from 'highlight.js';
 import { unescapeHtml, escapeHtml } from '@/utils/htmlProc';
 import { useSettingsStore } from '@/states/settings';
 import { mditLogger } from "@/utils/logger";
+import { CLASS_NAMES, SELECTORS, PERFORMANCE } from '@/config';
 
 export function HighLightedCodeBlock({ content, lang, markdownItIns }) {
 
@@ -33,7 +34,7 @@ export function HighLightedCodeBlock({ content, lang, markdownItIns }) {
         mditLogger('error', `hljs error:`, e);
     }
 
-    return (<pre className='hljs hl-code-block mdit-fenced-code-block'>
+    return (<pre className={`hljs ${CLASS_NAMES.HL_CODE_BLOCK} ${CLASS_NAMES.MDIT_FENCED_CODE_BLOCK}`}>
         <button className='lang_copy'>
             <p className='lang'>{lang}</p>
             <p className='copy'>复制</p>
@@ -62,7 +63,7 @@ export function renderInlineCodeBlockString(tokens, idx, options, env, slf) {
  * @param {HTMLElement} element 
  */
 export function addOnClickHandleForCopyButton(element) {
-    var buttons = element.querySelectorAll('pre.hl-code-block>button.lang_copy');
+    var buttons = element.querySelectorAll(SELECTORS.CODE_COPY_BUTTON);
     Array.from(buttons)
         .forEach(function (copyButton) {
             try {
@@ -70,7 +71,7 @@ export function addOnClickHandleForCopyButton(element) {
                 var codeContent = copyButton.parentElement.querySelector('code').textContent;
                 copyButton.onclick = () => { navigator.clipboard.writeText(codeContent) };
             } catch (e) {
-                ;
+                mditLogger('error', 'Failed to add click handler for copy button:', e);
             }
         });
 }
@@ -81,27 +82,27 @@ export function addOnClickHandleForCopyButton(element) {
  * @param {HTMLElement} element 
  */
 export function addOnClickHandleForLatexBlock(element) {
-    var buttons = element.querySelectorAll('div.katex-block-rendered>button.copy_latex');
-
+    var buttons = element.querySelectorAll(SELECTORS.LATEX_COPY_BUTTON);
 
     Array.from(buttons)
         .forEach(function (copyButton) {
             try {
                 // find tex annotation
-                var latexAnno = copyButton.parentElement.querySelector('annotation[encoding="application/x-tex"]').textContent;
+                var latexAnno = copyButton.parentElement.querySelector(SELECTORS.LATEX_ANNOTATION).textContent;
                 copyButton.onclick = () => { navigator.clipboard.writeText(latexAnno) };
             } catch (e) {
-                ;
+                mditLogger('error', 'Failed to add click handler for LaTeX copy button:', e);
             }
         });
 }
 
 export function changeDirectionToColumnWhenLargerHeight() {
-    var msgBlocks = document.querySelectorAll('.mix-message__inner');
+    var msgBlocks = document.querySelectorAll(SELECTORS.MIX_MESSAGE_INNER);
     Array.from(msgBlocks).forEach(function (block) {
         var height = block.offsetHeight;
         mditLogger('debug', 'Detected messagebox height:', height);
-        if (height > 35) {
+        // 当消息高度超过阈值时，改为列布局
+        if (height > PERFORMANCE.MESSAGE_HEIGHT_THRESHOLD) {
             block.style.flexDirection = 'column';
         }
         else {

@@ -2,6 +2,7 @@ import React from 'react';
 import {mditLogger} from "@/utils/logger";
 import {createRoot} from "react-dom/client";
 import {useSettingsStore} from "@/states/settings";
+import { CLASS_NAMES } from '@/config';
 
 export interface ShowOriginalContentButtonProps {
     msgBox: HTMLElement;
@@ -13,14 +14,14 @@ export function ShowOriginalContentButton(props: ShowOriginalContentButtonProps)
     return (
         <>
             <button
-                className='mdit-show-origin-button'
+                className={CLASS_NAMES.SHOW_ORIGIN_BUTTON}
                 onClick={function () {
                     mditLogger('info', 'ShowOriginalContent', 'Button clicked');
                     try {
                         props.msgBox.innerHTML = props.originalInnerHTML;
                     } catch (e) {
-                        mditLogger('debug', 'ShowOriginalContent', 'Content replaced failed', props.originalInnerHTML);
-                        mditLogger('error', e);
+                        mditLogger('error', 'ShowOriginalContent - Failed to replace content:', e);
+                        mditLogger('debug', 'ShowOriginalContent', 'Original HTML:', props.originalInnerHTML);
                     }
                 }}><p>Show Original</p>
             </button>

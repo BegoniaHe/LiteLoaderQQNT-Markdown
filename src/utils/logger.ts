@@ -5,7 +5,8 @@
 import { useSettingsStore } from '@/states/settings';
 
 declare const markdown_it: {
-    log: (consoleType: string, ...args: any[]) => any
+    log: (consoleType: string, ...args: unknown[]) => Promise<void>
+    get_log_path: () => Promise<string>
 };
 
 type DistributiveFilter<Origin, Filter> = Origin extends Filter ? Origin : never;
@@ -14,7 +15,7 @@ type DistributiveFilter<Origin, Filter> = Origin extends Filter ? Origin : never
  * All functions member type of `console`.
  */
 type LoggerFuncKey = {
-    [K in keyof Console]: Console[K] extends (args: any) => any ? K : never;
+    [K in keyof Console]: Console[K] extends (...args: unknown[]) => unknown ? K : never;
 }[keyof Console];
 
 /**
@@ -54,8 +55,8 @@ const defaultMditLoggerOptions: MditLoggerOptions = {
  * @param options `MditLoggerOptions`
  */
 export function mditLoggerGenerator(options: MditLoggerOptions = defaultMditLoggerOptions):
-    (consoleFunction: SupportedLoggerFuncKey, ...params: any[]) => (undefined) {
-    return function (consoleFunction: SupportedLoggerFuncKey, ...params: any[]) {
+    (consoleFunction: SupportedLoggerFuncKey, ...params: unknown[]) => (undefined) {
+    return function (consoleFunction: SupportedLoggerFuncKey, ...params: unknown[]) {
 
         // if user enabled console output in settings, and the console output config of this logger is on
         if (outputToConsoleSettingEnabled() && options.consoleOutput) {
@@ -78,7 +79,8 @@ export function mditLoggerGenerator(options: MditLoggerOptions = defaultMditLogg
                 markdown_it.log(consoleFunction, ...serializedParams);
             }
         } catch (e) {
-            ;
+            // 静默失败，避免日志系统本身的错误影响主功能
+            console.error('[MarkdownIt] Logger error:', e);
         }
 
         return undefined;

@@ -2,9 +2,18 @@
 import React from 'react';
 import markdownIt from 'markdown-it';
 import { renderToString } from 'react-dom/server';
-// hljs 没有类型定义，暂时使用 require
-const hljs = require('highlight.js');
+import hljs from 'highlight.js';
 import katex from '@/lib/markdown-it-katex';
+
+// markdown-it 高级功能插件
+import markdownItFootnote from 'markdown-it-footnote';
+import markdownItMark from 'markdown-it-mark';
+import markdownItSub from 'markdown-it-sub';
+import markdownItSup from 'markdown-it-sup';
+import { full as markdownItEmojiPlugin } from 'markdown-it-emoji';
+import markdownItDeflist from 'markdown-it-deflist';
+import markdownItInsert from 'markdown-it-ins';
+import markdownItAbbr from 'markdown-it-abbr';
 
 // Components
 import { HighLightedCodeBlock, renderInlineCodeBlockString } from '@/components/code_block';
@@ -16,14 +25,12 @@ import { useSettingsStore } from '@/states/settings';
 import { escapeHtml, purifyHtml, unescapeHtml } from '@/utils/htmlProc';
 import { mditLogger } from '@/utils/logger';
 
+// Config
+import { SELECTORS, CLASS_NAMES, MARKDOWN_CONFIG } from '@/config';
+
 
 
 type ReplaceFunc = (parentElement: HTMLElement, id: string) => any;
-
-const TEXT_ELEMENT_MATCHER = 'text-element';
-const IMG_ELEMENT_MATCHER = 'pic-element';
-
-const HANDLED_BY_FRAG_PROC_PREFIX = 'markdown-it-handled-as-'
 
 /**
  * Data type used by renderer to determine how to render and replace an element.
@@ -33,10 +40,6 @@ export interface MsgProcessInfo {
     replace?: ReplaceFunc;
     id?: string;
 }
-
-// declare const LiteLoader: LiteLoaderInterFace<Object>;
-// const markdownRenderedClassName = 'markdown-rendered';
-// const markdownIgnoredPieceClassName = 'mdit-ignored';
 let markdownItIns: markdownIt | undefined = undefined;
 
 /**
@@ -83,25 +86,40 @@ function getMarkdownIns() {
         xhtmlOut: true, // 使用 '/' 来闭合单标签 （比如 <br />）。
         // 这个选项只对完全的 CommonMark 模式兼容。
         breaks: true, // 转换段落里的 '\n' 到 <br>。
-        langPrefix: "language-", // 给围栏代码块的 CSS 语言前缀。对于额外的高亮代码非常有用。
+        langPrefix: MARKDOWN_CONFIG.LANG_PREFIX, // 给围栏代码块的 CSS 语言前缀。对于额外的高亮代码非常有用。
         linkify: settings.linkify, // 将类似 URL 的文本自动转换为链接。
 
         // 启用一些语言中立的替换 + 引号美化
         typographer: settings.typographer,
 
         // 双 + 单引号替换对，当 typographer 启用时。
-        // 或者智能引号等，可以是 String 或 Array。
-        //
-        // 比方说，你可以支持 '«»„“' 给俄罗斯人使用， '„“‚‘'  给德国人使用。
-        // 还有 ['«\xA0', '\xA0»', '‹\xA0', '\xA0›'] 给法国人使用（包括 nbsp）。
-        quotes: "“”‘’",
+        quotes: MARKDOWN_CONFIG.QUOTES,
 
         // custom highlight UI renderer for markdown it.
         highlight: function (str: string, lang: string) {
             return (renderToString(<HighLightedCodeBlock content={str} lang={lang}
                 markdownItIns={localMarkdownItIns} />));
         },
-    }).use(katex);
+    })
+    // 数学公式支持
+    .use(katex)
+    // 脚注支持 [^1]
+    .use(markdownItFootnote)
+    // 高亮文本 ==marked==
+    .use(markdownItMark)
+    // 下标 H~2~O
+    .use(markdownItSub)
+    // 上标 X^2^
+    .use(markdownItSup)
+    // 表情符号 :smile:
+    .use(markdownItEmojiPlugin)
+    // 定义列表
+    .use(markdownItDeflist)
+    // 插入文本 ++inserted++
+    .use(markdownItInsert)
+    // 缩写定义
+    .use(markdownItAbbr);
+    
     localMarkdownItIns.renderer.rules.code_inline = renderInlineCodeBlockString;
     markdownItIns = localMarkdownItIns;
     return localMarkdownItIns;
@@ -146,8 +164,8 @@ const textElementProcessor: FragmentProcessFunc = (parent, element, index) => {
 
     // filter to only process pure text messages fragments
     if (!(element.tagName == 'SPAN')
-        || !element.classList.contains(TEXT_ELEMENT_MATCHER)
-        || element.querySelector('.text-element--at')) {
+        || !element.classList.contains(SELECTORS.TEXT_ELEMENT)
+        || element.querySelector(SELECTORS.AT_ELEMENT)) {
         return undefined;
     }
 
@@ -161,10 +179,42 @@ const textElementProcessor: FragmentProcessFunc = (parent, element, index) => {
         if (settings.unescapeAllHtmlEntites == true) {
             return unescapeHtml(x);
         }
+        
+        let result = x;
+        // 总是反转义安全的 HTML 标签，即使未启用完全反转义
+        // 这些标签在 DOMPurify 白名单中，是安全的
+        const safeTags = [
+            // 块级标签
+            'div', 'p', 'blockquote', 'section',
+            // 格式化标签
+            'kbd', 'mark', 'sub', 'sup', 'ins', 'del', 'small',
+            'strong', 'em', 'b', 'i', 'u', 's',
+            // 链接
+            'a',
+            // 交互标签
+            'details', 'summary',
+            // 列表和表格
+            'ul', 'ol', 'li', 'dl', 'dt', 'dd',
+            'table', 'thead', 'tbody', 'tr', 'th', 'td',
+        ];
+        safeTags.forEach(tag => {
+            const openTagEscaped = `&lt;${tag}&gt;`;
+            const closeTagEscaped = `&lt;/${tag}&gt;`;
+            // 匹配带属性的标签，支持属性中的 HTML 实体（如 &amp; &quot;）
+            const openTagEscapedWithAttrs = new RegExp(`&lt;${tag}\\s+[^>]*?&gt;`, 'gi');
+            
+            result = result.replaceAll(openTagEscaped, `<${tag}>`);
+            result = result.replaceAll(closeTagEscaped, `</${tag}>`);
+            result = result.replace(openTagEscapedWithAttrs, (match) => {
+                return match.replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+            });
+        });
+        
         if (settings.unescapeGtInText == true) {
-            return x.replaceAll('&gt;', '>');
+            result = result.replaceAll('&gt;', '>');
         }
-        return x;
+        
+        return result;
     }
 
     // get all text in this text span

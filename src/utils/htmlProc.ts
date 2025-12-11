@@ -52,7 +52,38 @@ export function escapeHtml(input: string) {
  * @return {string} Purified HTML string.
  */
 export function purifyHtml(input: string) {
-    let res = DOMPurify.sanitize(input);
+    let res = DOMPurify.sanitize(input, {
+        // 允许的标签白名单 - 扩展以支持更多 Markdown 功能
+        ALLOWED_TAGS: [
+            // 基础标签
+            'p', 'br', 'span', 'div', 'a', 'code', 'pre',
+            // 格式化标签
+            'strong', 'em', 'u', 's', 'b', 'i', 'mark', 'ins', 'del', 'sub', 'sup', 'small', 'kbd',
+            // 列表
+            'ul', 'ol', 'li', 'dl', 'dt', 'dd',
+            // 标题
+            'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+            // 引用和分隔
+            'blockquote', 'hr',
+            // 表格
+            'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td', 'caption',
+            // 交互元素
+            'details', 'summary',
+        ],
+        // 允许的属性白名单
+        ALLOWED_ATTR: [
+            'class', 'id', 'style', 'href', 'title', 'alt',
+            'data-footnote-id', 'data-footnote-backref',
+            'aria-label', 'aria-hidden',
+            'open',  // details 标签
+            'target', 'rel',  // 链接属性
+            'colspan', 'rowspan',  // 表格属性
+        ],
+        // 允许 data 属性（用于脚注等功能）
+        ALLOW_DATA_ATTR: true,
+        // 保持安全的 URI 协议
+        ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
+    });
     mditLogger('debug', 'Purify', 'Removed', DOMPurify.removed);
     return res;
 }

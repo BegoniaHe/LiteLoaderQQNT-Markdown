@@ -4,24 +4,24 @@ import {
 } from 'zustand/middleware';
 
 import { LiteLoaderInterFace } from '@/utils/liteloader_type';
+import { PLUGIN_CONFIG } from '@/config';
 
 declare const LiteLoader: LiteLoaderInterFace<Object>;
 
-const pluginSlugPrefix = 'markdown_it';
 const emptyStorageState = {};
 
 
 const _storage = {
     async getItem(name: string) {
         return JSON.stringify(
-            await LiteLoader.api.config.get(`${pluginSlugPrefix}/${name}`, emptyStorageState)
+            await LiteLoader.api.config.get(`${PLUGIN_CONFIG.SLUG_PREFIX}/${name}`, emptyStorageState)
         );
     },
     async setItem(name: string, value: string) {
-        return await LiteLoader.api.config.set(`${pluginSlugPrefix}/${name}`, JSON.parse(value));
+        return await LiteLoader.api.config.set(`${PLUGIN_CONFIG.SLUG_PREFIX}/${name}`, JSON.parse(value));
     },
     async removeItem(name: string) {
-        return await LiteLoader.api.config.set(`${pluginSlugPrefix}/${name}`, emptyStorageState);
+        return await LiteLoader.api.config.set(`${PLUGIN_CONFIG.SLUG_PREFIX}/${name}`, emptyStorageState);
     }
 }
 

@@ -2,19 +2,14 @@
 import { createRoot } from 'react-dom/client';
 import React from 'react';
 import { SettingPage } from "./components/setting_page";
-import hljs from 'highlight.js';
-import markdownIt from 'markdown-it';
-
 
 // Components
 import {
-  HighLightedCodeBlock,
   addOnClickHandleForCopyButton,
-  renderInlineCodeBlockString,
   addOnClickHandleForLatexBlock,
   changeDirectionToColumnWhenLargerHeight
 } from './components/code_block';
-import { ShowOriginalContentButton, addShowOriginButtonToMarkdownBody } from '@/components/show_origin';
+import { addShowOriginButtonToMarkdownBody } from '@/components/show_origin';
 
 // States
 import { useSettingsStore } from '@/states/settings';
@@ -22,22 +17,28 @@ import { useSettingsStore } from '@/states/settings';
 // Utils
 import { debounce } from 'throttle-debounce';
 import { mditLogger, elementDebugLogger } from './utils/logger';
-import { MsgProcessInfo, processorList } from '@/render/msgpiece_processor';
+import { processorList } from '@/render/msgpiece_processor';
+
+// Config
+import { SELECTORS, CLASS_NAMES, DATA_ATTRIBUTES, PERFORMANCE, CSS_IDS } from '@/config';
 
 // Types
 import { LiteLoaderInterFace } from '@/utils/liteloader_type';
 
 declare const LiteLoader: LiteLoaderInterFace<Object>;
-const markdownRenderedClassName = 'markdown-rendered';
-const markdownIgnoredPieceClassName = 'mdit-ignored';
-let markdownItIns: markdownIt | undefined = undefined;
+
+/**
+ * 使用 WeakSet 标记已渲染的消息元素
+ */
+const renderedMessages = new WeakSet<HTMLElement>();
 
 onLoad();
 
-
-
-
-const debouncedRender = debounce(50, render, { atBegin: false },);
+/**
+ * 使用防抖优化渲染性能
+ * 防止短时间内频繁触发渲染函数
+ */
+const debouncedRender = debounce(PERFORMANCE.DEBOUNCE_DELAY, render, { atBegin: false });
 
 /**
  * Root markdown render function.
@@ -45,16 +46,13 @@ const debouncedRender = debounce(50, render, { atBegin: false },);
  * This function will get called once change of msgList is detected and a possible rerender is required.
  */
 function render() {
-  // return;
   mditLogger('debug', 'renderer() triggered');
 
-  const settings = useSettingsStore.getState();
-
-  const elements = document.querySelectorAll(".message-content");
+  const elements = document.querySelectorAll(SELECTORS.MESSAGE_CONTENT);
 
   let newlyFoundMsgList = Array.from(elements)
-    // 跳过已渲染的消息
-    .filter((messageBox) => (!messageBox.classList.contains(markdownRenderedClassName)))
+    // 跳过已渲染的消息 - 使用 WeakSet 更可靠
+    .filter((messageBox) => !renderedMessages.has(messageBox as HTMLElement))
     // 跳过空消息
     .filter((messageBox) => messageBox.childNodes.length > 0);
 
@@ -91,17 +89,15 @@ function handleExternalLink(markdownBody: HTMLElement) {
 }
 
 async function renderSingleMsgBox(messageBox: HTMLElement) {
-  const settings = useSettingsStore.getState();
-
-  // For more info about Rendered class mark,
-  // checkout: docs/dev/msg_rendering_process.md
-  // skip rendered message
-  if (messageBox.classList.contains(markdownRenderedClassName)) {
+  // 检查是否已渲染 - 双重检查确保安全
+  if (renderedMessages.has(messageBox)) {
     return;
   }
 
-  // mark the current message as rendered
-  messageBox.classList.add(markdownRenderedClassName);
+  // 标记为已渲染 - 优先标记防止并发问题
+  renderedMessages.add(messageBox);
+  // 同时添加 CSS 类名作为后备标记（供样式使用）
+  messageBox.classList.add(CLASS_NAMES.MARKDOWN_RENDERED);
 
   // original innerHTML for message box.
   // This is captured and used by "Show Original" feature.
@@ -165,17 +161,17 @@ function _onLoad() {
 
   loadCSSFromURL(`local:///${plugin_path}/src/style/markdown.css`);
   loadCSSFromURL(`local:///${plugin_path}/src/style/katex.css`);
-  loadCSSFromURL(`local:///${plugin_path}/src/style/hljs-github-dark.css`, 'github-hl-dark');
-  loadCSSFromURL(`local:///${plugin_path}/src/style/hljs-github.css`, 'github-hl-adaptive');
+  loadCSSFromURL(`local:///${plugin_path}/src/style/hljs-github-dark.css`, CSS_IDS.GITHUB_HL_DARK);
+  loadCSSFromURL(`local:///${plugin_path}/src/style/hljs-github.css`, CSS_IDS.GITHUB_HL_ADAPTIVE);
 
   // Change fenced code block theme based on settings.
   useSettingsStore.subscribe(
     (state: { codeHighligtThemeFollowSystem: boolean }) => state.codeHighligtThemeFollowSystem, 
     (isFollowSystem: boolean) => {
       if (isFollowSystem) {
-        loadCSSFromURL(`local:///${plugin_path}/src/style/hljs-github.css`, 'github-hl-adaptive');
+        loadCSSFromURL(`local:///${plugin_path}/src/style/hljs-github.css`, CSS_IDS.GITHUB_HL_ADAPTIVE);
       } else {
-        loadCSSFromURL(`local:///${plugin_path}/src/style/hljs-github-dark.css`, 'github-hl-dark');
+        loadCSSFromURL(`local:///${plugin_path}/src/style/hljs-github-dark.css`, CSS_IDS.GITHUB_HL_DARK);
       }
     }
   );
@@ -189,9 +185,8 @@ function _onLoad() {
         try {
           debouncedRender();
         } catch (e) {
-          ;
+          mditLogger('error', 'Render error in MutationObserver:', e);
         }
-
       }
     }
   });
