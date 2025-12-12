@@ -1,6 +1,7 @@
-.message-content {
+/* 移除强制颜色设置，避免与主题冲突 */
+/* .message-content {
     color: var(--chatarea-text-color-self);
-}
+} */
 
 .message-content h1 {
     font-size: 2em;
@@ -124,6 +125,7 @@ div.katex-block-rendered > button.copy_latex {
     top: 2px;
     min-width: 4rem;
     min-height: 1.5rem;
+    -webkit-backdrop-filter: blur(8px);
     backdrop-filter: blur(8px);
     border-radius: 4px;
     border-width: 0px;
@@ -297,6 +299,7 @@ pre.mdit-fenced-code-block > code {
 .message-content summary {
     cursor: pointer;
     font-weight: bold;
+    -webkit-user-select: none;
     user-select: none;
     padding: 0.5em 0;
     outline: none;
@@ -430,13 +433,6 @@ pre.mdit-fenced-code-block > code {
 .message-content p {
     margin: 0.5em 0;
     word-wrap: break-word;
-}
-
-/* 内嵌 HTML 样式支持 */
-.message-content div[style],
-.message-content span[style],
-.message-content p[style] {
-    /* 允许自定义样式，DOMPurify 已经过滤了不安全的内容 */
 }
 
 /* 暗色模式下的文本颜色优化 */

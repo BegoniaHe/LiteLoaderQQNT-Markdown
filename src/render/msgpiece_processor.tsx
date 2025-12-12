@@ -185,69 +185,26 @@ const textElementProcessor: FragmentProcessFunc = (parent, element, index) => {
     mditLogger("debug", "ElementMatch", "Source", element);
     mditLogger("debug", "Element", "Match", "spanTextProcessor");
 
-    // entity processor
-    // determine the HTML enetity escape behaviour based on user settings
-    function entityProcesor(x: string) {
-        if (settings.unescapeAllHtmlEntites == true) {
+    /**
+     * HTML实体处理器
+     * 
+     * 安全策略（修复后）：
+     * - 移除了手动正则替换逻辑，避免绕过风险
+     * - 完全依赖 he.decode() 进行实体解码
+     * - 依赖 DOMPurify 作为最终安全防线
+     * 
+     * @param x - 输入的HTML字符串
+     * @returns 处理后的字符串
+     */
+    function entityProcesor(x: string): string {
+        // 如果启用了完全反转义，使用 he.decode() 解码所有HTML实体
+        if (settings.unescapeAllHtmlEntites === true) {
             return unescapeHtml(x);
         }
 
+        // 仅处理引用符号的反转义（用于Blockquote支持）
         let result = x;
-        // 总是反转义安全的 HTML 标签，即使未启用完全反转义
-        // 这些标签在 DOMPurify 白名单中，是安全的
-        const safeTags = [
-            // 块级标签
-            "div",
-            "p",
-            "blockquote",
-            "section",
-            // 格式化标签
-            "kbd",
-            "mark",
-            "sub",
-            "sup",
-            "ins",
-            "del",
-            "small",
-            "strong",
-            "em",
-            "b",
-            "i",
-            "u",
-            "s",
-            // 链接
-            "a",
-            // 交互标签
-            "details",
-            "summary",
-            // 列表和表格
-            "ul",
-            "ol",
-            "li",
-            "dl",
-            "dt",
-            "dd",
-            "table",
-            "thead",
-            "tbody",
-            "tr",
-            "th",
-            "td",
-        ];
-        safeTags.forEach((tag) => {
-            const openTagEscaped = `&lt;${tag}&gt;`;
-            const closeTagEscaped = `&lt;/${tag}&gt;`;
-            // 匹配带属性的标签，支持属性中的 HTML 实体（如 &amp; &quot;）
-            const openTagEscapedWithAttrs = new RegExp(`&lt;${tag}\\s+[^>]*?&gt;`, "gi");
-
-            result = result.replaceAll(openTagEscaped, `<${tag}>`);
-            result = result.replaceAll(closeTagEscaped, `</${tag}>`);
-            result = result.replace(openTagEscapedWithAttrs, (match) => {
-                return match.replace(/&lt;/g, "<").replace(/&gt;/g, ">");
-            });
-        });
-
-        if (settings.unescapeGtInText == true) {
+        if (settings.unescapeGtInText === true) {
             result = result.replaceAll("&gt;", ">");
         }
 

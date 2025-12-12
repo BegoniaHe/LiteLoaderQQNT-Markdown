@@ -13,6 +13,9 @@ export const IPC_CHANNELS = {
 
     /** 获取日志路径通道 */
     GET_LOG_PATH: "LiteLoader.markdown_it.get_log_path",
+
+    /** 检查日志目录权限通道 */
+    CHECK_LOG_PERMISSION: "LiteLoader.markdown_it.check_log_permission",
 } as const;
 
 /**

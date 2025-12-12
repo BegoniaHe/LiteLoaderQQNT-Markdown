@@ -1,10 +1,37 @@
 import * as path from "path";
-import { existsSync, mkdirSync, rmSync, createWriteStream } from "fs";
+import { existsSync, mkdirSync, rmSync, createWriteStream, writeFileSync, unlinkSync } from "fs";
 import { PLUGIN_CONFIG } from "@/config";
 
 export const LogPathHelper = {
     getLogFolderPath() {
         return path.join(LiteLoader.plugins.markdown_it.path.data, PLUGIN_CONFIG.LOG_FOLDER);
+    },
+
+    /**
+     * 检测是否有日志目录的写入权限
+     * @returns true 表示有权限，false 表示无权限
+     */
+    checkLogPermission(): boolean {
+        try {
+            const logFolderPath = this.getLogFolderPath();
+            
+            // 尝试创建日志目录
+            if (!existsSync(logFolderPath)) {
+                mkdirSync(logFolderPath, { recursive: true });
+            }
+            
+            // 尝试写入测试文件
+            const testFilePath = path.join(logFolderPath, '.permission_test');
+            writeFileSync(testFilePath, 'test');
+            
+            // 清理测试文件
+            unlinkSync(testFilePath);
+            
+            return true;
+        } catch (error) {
+            console.warn('[markdown-it] 无日志目录写入权限:', error);
+            return false;
+        }
     },
 
     /**

@@ -20,7 +20,6 @@ export interface SettingStateProperties {
 
     // Debug settings
     consoleOutput: boolean; // If false, mditLogger will not output to console.
-    fileOutput: boolean; // If false, mditLogger will not add log into log file.
     enableElementCapture: boolean;
     showOriginalButton: boolean;
 }
@@ -60,7 +59,6 @@ export const useSettingsStore = create<SettingStateProperties & SettingStateActi
 
                 // Debug settings
                 consoleOutput: true,
-                fileOutput: true,
                 enableElementCapture: false,
                 showOriginalButton: false,
 

@@ -39,8 +39,12 @@ const debouncedRender = debounce(PERFORMANCE.DEBOUNCE_DELAY, render, { atBegin: 
  * Root markdown render function.
  *
  * This function will get called once change of msgList is detected and a possible rerender is required.
+ * 
+ * 修复说明：
+ * - 使用 Promise.all() 等待所有消息渲染完成
+ * - 解决了后处理函数在渲染完成前执行的竞态条件问题
  */
-function render() {
+async function render(): Promise<void> {
     mditLogger("debug", "renderer() triggered");
 
     const elements = document.querySelectorAll(SELECTORS.MESSAGE_CONTENT);
@@ -53,15 +57,18 @@ function render() {
 
     mditLogger("debug", "Newly found message count:", newlyFoundMsgList.length);
 
-    for (const msgBox of newlyFoundMsgList) {
+    // 等待所有消息渲染完成
+    const renderPromises = newlyFoundMsgList.map(async (msgBox) => {
         try {
-            renderSingleMsgBox(msgBox as HTMLElement);
+            await renderSingleMsgBox(msgBox as HTMLElement);
         } catch (e) {
             mditLogger("error", "Render msgbox failed", e);
         }
-    }
+    });
 
-    // code that runs after renderer work finished.
+    await Promise.all(renderPromises);
+
+    // 后处理函数现在会在所有消息渲染完成后执行
     changeDirectionToColumnWhenLargerHeight();
     elementDebugLogger();
 }
@@ -69,15 +76,31 @@ function render() {
 /**
  * Markdown body process function used in render() to add openExternal()
  * behavior to all links inside rendered markdownBody.
+ * 
+ * 确保所有链接（包括HTML渲染的<a>标签）都用系统浏览器打开
  */
 function handleExternalLink(markdownBody: HTMLElement) {
-    markdownBody.querySelectorAll("a").forEach((e) => {
-        e.classList.add("markdown_it_link");
-        e.classList.add("text-link");
-        e.onclick = async (event) => {
+    markdownBody.querySelectorAll("a").forEach((linkElement) => {
+        // 添加样式类
+        linkElement.classList.add("markdown_it_link");
+        linkElement.classList.add("text-link");
+        
+        // 绑定点击事件，使用系统浏览器打开所有链接
+        linkElement.onclick = async (event) => {
             event.preventDefault();
-            const href = (event.composedPath()[0] as any).href.replace("app://./renderer/", "");
-            await LiteLoader.api.openExternal(href);
+            event.stopPropagation();
+            
+            // 获取 href 属性
+            const href = linkElement.getAttribute("href");
+            if (href) {
+                // 处理相对路径和 app:// 协议
+                const cleanHref = href.replace("app://./renderer/", "");
+                try {
+                    await LiteLoader.api.openExternal(cleanHref);
+                } catch (error) {
+                    mditLogger("error", "Failed to open external link:", cleanHref, error);
+                }
+            }
             return false;
         };
     });

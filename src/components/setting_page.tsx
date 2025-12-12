@@ -117,25 +117,9 @@ export function SettingPage() {
                         />
 
                         <SwitchSettingTile
-                            settingName="fileOutput"
-                            title="日志文件输出"
-                            caption="关闭后，MarkdownIt 将不会将调试信息保存在日志文件中。"
-                        />
-
-                        <SwitchSettingTile
                             settingName="enableElementCapture"
                             title="启用元素调试"
-                            caption="开启后，日志文件中将会保存指定调试消息的HTML。"
-                        />
-
-                        <ButtonTile
-                            title="MarkdownIt 日志目录"
-                            caption="日志存放于插件 [插件数据根目录]/log 文件夹中。"
-                            actionName="打开日志目录"
-                            callback={async () => {
-                                const path = await markdown_it.get_log_path();
-                                LiteLoader.api.openPath(path);
-                            }}
+                            caption="开启后，将在控制台输出指定调试消息的HTML片段。"
                         />
                     </setting-list>
                 </setting-panel>
@@ -192,6 +176,8 @@ function SwitchSettingTile({ settingName, title, caption }: SwitchSettingTilePro
 
     const forceValue = getForceValue();
     const settingsValue = forceValue ?? settings[settingName];
+    
+    const isDisabled = forceValue !== undefined;
 
     return (
         <setting-item>
@@ -199,10 +185,12 @@ function SwitchSettingTile({ settingName, title, caption }: SwitchSettingTilePro
             <setting-switch
                 data-direction="row"
                 onClick={() => {
-                    updateSetting(settingName, !settings[settingName]);
+                    if (!isDisabled) {
+                        updateSetting(settingName, !settings[settingName]);
+                    }
                 }}
                 is-active={settingsValue === true ? true : undefined}
-                is-disabled={forceValue !== undefined ? true : undefined}
+                is-disabled={isDisabled ? true : undefined}
                 style={{ flex: "none" }}
             />
         </setting-item>

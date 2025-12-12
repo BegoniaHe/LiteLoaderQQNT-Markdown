@@ -8,8 +8,13 @@
  * 3. 类型安全：TypeScript 提供类型检查
  */
 
-// 导入共享常量（与 preload 共享）
-export { IPC_CHANNELS, PLUGIN_CONFIG } from "@/common/constants";
+/**
+ * 插件配置常量
+ */
+export const PLUGIN_CONFIG = {
+    /** 插件 slug 前缀（用于配置存储） */
+    SLUG_PREFIX: "markdown_it",
+} as const;
 
 /**
  * DOM 选择器常量
@@ -91,6 +96,14 @@ export const PERFORMANCE = {
 
     /** 消息高度阈值（像素） - 超过此高度改为列布局 */
     MESSAGE_HEIGHT_THRESHOLD: 35,
+} as const;
+
+/**
+ * 延迟时间常量
+ */
+export const DELAYS = {
+    /** 右键菜单注入延迟 - 确保QQNT菜单已创建 */
+    CONTEXT_MENU_INJECT: 10,
 } as const;
 
 /**

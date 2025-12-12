@@ -4,11 +4,6 @@
 
 import { useSettingsStore } from "@/states/settings";
 
-declare const markdown_it: {
-    log: (consoleType: string, ...args: unknown[]) => Promise<void>;
-    get_log_path: () => Promise<string>;
-};
-
 type DistributiveFilter<Origin, Filter> = Origin extends Filter ? Origin : never;
 
 /**
@@ -28,12 +23,8 @@ export type SupportedLoggerFuncKey = DistributiveFilter<
     "debug" | "log" | "info" | "warn" | "error"
 >;
 
-function outputToConsoleSettingEnabled() {
+function outputToConsoleSettingEnabled(): boolean {
     return useSettingsStore.getState().consoleOutput;
-}
-
-function outputToFileSettingEnabled() {
-    return useSettingsStore.getState().fileOutput;
 }
 
 export interface MditLoggerOptions {
@@ -41,15 +32,10 @@ export interface MditLoggerOptions {
      * Determine if a log will be output in DevTools console
      */
     consoleOutput: boolean;
-    /**
-     * Determine if a log will be persisted in file
-     */
-    fileOutput: boolean;
 }
 
 const defaultMditLoggerOptions: MditLoggerOptions = {
     consoleOutput: true,
-    fileOutput: true,
 };
 
 /**
@@ -68,22 +54,6 @@ export function mditLoggerGenerator(
                 "background-color: rgba(0, 149, 204, 0.8); border-radius: 6px;padding-block: 2px; padding-inline: 0px; color: white;",
                 ...params
             );
-        }
-
-        try {
-            if (outputToFileSettingEnabled() && options.fileOutput) {
-                const serializedParams = params.map((param) => {
-                    if (typeof param !== "string") {
-                        return JSON.stringify(param);
-                    }
-                    return param;
-                });
-
-                markdown_it.log(consoleFunction, ...serializedParams);
-            }
-        } catch (e) {
-            // 静默失败，避免日志系统本身的错误影响主功能
-            console.error("[MarkdownIt] Logger error:", e);
         }
 
         return undefined;
@@ -133,13 +103,8 @@ export function elementDebugLogger() {
     Array.from(flaggedMsgBoxs)
         .filter((ele) => !ele.classList.contains(loggedClassName)) // ensure one message box will only be logged one time
         .forEach((ele) => {
-            // file-only logger
-            mditLoggerGenerator({
-                ...defaultMditLoggerOptions,
-                consoleOutput: false,
-            })("log", ele.outerHTML);
-
-            mditLogger("debug", `Element captured: ${ele.tagName}`);
+            // 文件日志已禁用，仅输出到控制台
+            mditLogger("debug", `Element captured: ${ele.tagName}`, ele.outerHTML.substring(0, 500));
 
             ele.classList.add(loggedClassName);
             loggedCount++;

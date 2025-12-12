@@ -47,11 +47,17 @@ export function escapeHtml(input: string) {
 }
 
 /**
- * Using DOMPurify to purify HTML
- * @param {string} input
- * @return {string} Purified HTML string.
+ * 使用 DOMPurify 净化 HTML
+ * 
+ * 安全配置：
+ * - 移除了 style 属性，防止 CSS 注入
+ * - 限制 data-* 属性为特定前缀
+ * - 严格的标签和属性白名单
+ * 
+ * @param {string} input - 待净化的HTML字符串
+ * @return {string} 净化后的HTML字符串
  */
-export function purifyHtml(input: string) {
+export function purifyHtml(input: string): string {
     const res = DOMPurify.sanitize(input, {
         // 允许的标签白名单 - 扩展以支持更多 Markdown 功能
         ALLOWED_TAGS: [
@@ -77,6 +83,8 @@ export function purifyHtml(input: string) {
             "sup",
             "small",
             "kbd",
+            "abbr",
+            "button",
             // 列表
             "ul",
             "ol",
@@ -107,6 +115,45 @@ export function purifyHtml(input: string) {
             "details",
             "summary",
             "input",
+            // KaTeX/MathML 数学公式标签
+            "math",
+            "semantics",
+            "mrow",
+            "mi",
+            "mo",
+            "mn",
+            "msup",
+            "msub",
+            "mfrac",
+            "munder",
+            "mover",
+            "munderover",
+            "msqrt",
+            "mroot",
+            "mtext",
+            "menclose",
+            "mtable",
+            "mtr",
+            "mtd",
+            "annotation",
+            "mspace",
+            "mpadded",
+            "mstyle",
+            "merror",
+            "mphantom",
+            "svg",
+            "path",
+            "line",
+            "rect",
+            "circle",
+            "ellipse",
+            "polygon",
+            "polyline",
+            "g",
+            "defs",
+            "use",
+            "symbol",
+            "clipPath",
         ],
         // 允许的属性白名单
         ALLOWED_ATTR: [
@@ -116,21 +163,89 @@ export function purifyHtml(input: string) {
             "href",
             "title",
             "alt",
+            // markdown-it 脚注专用属性
             "data-footnote-id",
             "data-footnote-backref",
+            // MathML 属性
+            "xmlns",
+            "encoding",
+            "displaystyle",
+            "mathvariant",
+            "scriptlevel",
+            "accent",
+            "accentunder",
+            "align",
+            "bevelled",
+            "close",
+            "columnalign",
+            "columnlines",
+            "columnspacing",
+            "depth",
+            "display",
+            "displaystyle",
+            "fence",
+            "frame",
+            "height",
+            "linethickness",
+            "lspace",
+            "mathbackground",
+            "mathcolor",
+            "mathsize",
+            "mathvariant",
+            "maxsize",
+            "minsize",
+            "movablelimits",
+            "notation",
+            "numalign",
+            "open",
+            "rowalign",
+            "rowlines",
+            "rowspacing",
+            "rspace",
+            "scriptlevel",
+            "separator",
+            "separators",
+            "stretchy",
+            "width",
+            // SVG 属性
+            "viewBox",
+            "preserveAspectRatio",
+            "x",
+            "y",
+            "width",
+            "height",
+            "d",
+            "fill",
+            "stroke",
+            "stroke-width",
+            "transform",
+            "points",
+            "x1",
+            "y1",
+            "x2",
+            "y2",
+            "cx",
+            "cy",
+            "r",
+            "rx",
+            "ry",
+            // 可访问性属性
             "aria-label",
             "aria-hidden",
+            // 交互元素属性
             "open",
             "target",
             "rel",
+            // 表格属性
             "colspan",
             "rowspan",
+            // 表单属性
             "type",
             "checked",
             "disabled",
         ],
-        // 允许 data 属性
-        ALLOW_DATA_ATTR: true,
+        // 禁用通配 data 属性，仅允许明确列出的
+        ALLOW_DATA_ATTR: false,
         // 保持安全的 URI 协议
         ALLOWED_URI_REGEXP:
             /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,

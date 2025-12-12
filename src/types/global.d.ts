@@ -67,20 +67,10 @@ interface LiteLoaderAPI {
 }
 
 /**
- * 插件自定义 IPC 接口
- * 通过 preload 脚本暴露到渲染进程
- */
-interface MarkdownItIPC {
-    log: (consoleType: string, ...args: unknown[]) => Promise<void>;
-    get_log_path: () => Promise<string>;
-}
-
-/**
  * 全局对象声明
  */
 declare global {
     const LiteLoader: LiteLoaderAPI;
-    const markdown_it: MarkdownItIPC;
 }
 
 export {};
