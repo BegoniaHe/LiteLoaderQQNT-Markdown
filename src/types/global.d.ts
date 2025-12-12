@@ -3,8 +3,6 @@
  * 统一声明 LiteLoaderQQNT 提供的全局对象和类型
  */
 
-import { SettingStateProperties } from "@/states/settings";
-
 /**
  * LiteLoaderQQNT 插件接口定义
  * 基于 LiteLoaderQQNT 1.4.1 源码
@@ -30,13 +28,13 @@ interface LiteLoaderAPI {
     };
 
     package: {
-        liteloader: Record<string, any>; // LiteLoader package.json
-        qqnt: Record<string, any>; // QQNT package.json
+        liteloader: Record<string, unknown>; // LiteLoader package.json
+        qqnt: Record<string, unknown>; // QQNT package.json
     };
 
     plugins: {
         [slug: string]: {
-            manifest: Record<string, any>; // 插件清单
+            manifest: Record<string, unknown>; // 插件清单
             incompatible: boolean; // 是否不兼容
             disabled: boolean; // 是否被禁用
             path: {
@@ -55,8 +53,11 @@ interface LiteLoaderAPI {
         openExternal(url: string): void;
         openPath(path: string): void;
         config: {
-            set(slug: string, config: Record<string, any>): Promise<Record<string, any>>;
-            get(slug: string, defaultConfig: Record<string, any>): Promise<Record<string, any>>;
+            set(slug: string, config: Record<string, unknown>): Promise<Record<string, unknown>>;
+            get(
+                slug: string,
+                defaultConfig: Record<string, unknown>
+            ): Promise<Record<string, unknown>>;
         };
         plugin: {
             install(slug: string): void;

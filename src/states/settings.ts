@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 
-import { persist, createJSONStorage, subscribeWithSelector } from "zustand/middleware";
+import { persist, subscribeWithSelector } from "zustand/middleware";
 import { LiteLoaderStorage } from "@/utils/liteloader_config";
 
 export interface SettingStateProperties {

@@ -1,6 +1,9 @@
 import React from "react";
 import hljs from "highlight.js";
 import type MarkdownIt from "markdown-it";
+type Token = MarkdownIt.Token;
+type Renderer = MarkdownIt.Renderer;
+type Options = MarkdownIt.Options;
 
 import { unescapeHtml, escapeHtml } from "@/utils/htmlProc";
 import { useSettingsStore } from "@/states/settings";
@@ -20,7 +23,12 @@ interface HighLightedCodeBlockProps {
  * 高亮代码块组件
  * 使用 highlight.js 进行语法高亮
  */
-export function HighLightedCodeBlock({ content, lang, markdownItIns }: HighLightedCodeBlockProps) {
+export function HighLightedCodeBlock({
+    content,
+    lang,
+    markdownItIns: _markdownItIns,
+}: HighLightedCodeBlockProps) {
+
     // 检查语言是否受支持
     if (!lang || !hljs.getLanguage(lang)) {
         lang = "plaintext";
@@ -69,11 +77,11 @@ export function HighLightedCodeBlock({ content, lang, markdownItIns }: HighLight
  * markdown-it 渲染器函数
  */
 export function renderInlineCodeBlockString(
-    tokens: any[],
+    tokens: Token[],
     idx: number,
-    options: any,
-    env: any,
-    slf: any
+    _options: Options,
+    _env: unknown,
+    slf: Renderer
 ): string {
     const token = tokens[idx];
 

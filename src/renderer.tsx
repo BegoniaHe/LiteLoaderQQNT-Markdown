@@ -4,11 +4,7 @@ import React from "react";
 import { SettingPage } from "./components/setting_page";
 
 // Components
-import {
-    addOnClickHandleForCopyButton,
-    addOnClickHandleForLatexBlock,
-    changeDirectionToColumnWhenLargerHeight,
-} from "./components/code_block";
+import { changeDirectionToColumnWhenLargerHeight } from "./components/code_block";
 import { addShowOriginButtonToMarkdownBody } from "@/components/show_origin";
 
 // States
@@ -18,16 +14,23 @@ import { useSettingsStore } from "@/states/settings";
 import { debounce } from "throttle-debounce";
 import { mditLogger, elementDebugLogger } from "./utils/logger";
 import { processorList } from "@/render/msgpiece_processor";
+import { postProcessRenderedMessageBox } from "@/render/postprocess";
 
 // Config
-import { SELECTORS, CLASS_NAMES, DATA_ATTRIBUTES, PERFORMANCE, CSS_IDS } from "@/config";
+import { SELECTORS, CLASS_NAMES, PERFORMANCE, CSS_IDS } from "@/config";
 
 /**
  * 使用 WeakSet 标记已渲染的消息元素
  */
 const renderedMessages = new WeakSet<HTMLElement>();
 
-onLoad();
+// 避免在宿主重复注入/热重载等场景下重复初始化
+const INIT_FLAG = "__markdown_it_renderer_inited__";
+const globalFlags = globalThis as typeof globalThis & Record<string, boolean>;
+if (!globalFlags[INIT_FLAG]) {
+    globalFlags[INIT_FLAG] = true;
+    onLoad();
+}
 
 /**
  * 使用防抖优化渲染性能
@@ -71,39 +74,6 @@ async function render(): Promise<void> {
     // 后处理函数现在会在所有消息渲染完成后执行
     changeDirectionToColumnWhenLargerHeight();
     elementDebugLogger();
-}
-
-/**
- * Markdown body process function used in render() to add openExternal()
- * behavior to all links inside rendered markdownBody.
- * 
- * 确保所有链接（包括HTML渲染的<a>标签）都用系统浏览器打开
- */
-function handleExternalLink(markdownBody: HTMLElement) {
-    markdownBody.querySelectorAll("a").forEach((linkElement) => {
-        // 添加样式类
-        linkElement.classList.add("markdown_it_link");
-        linkElement.classList.add("text-link");
-        
-        // 绑定点击事件，使用系统浏览器打开所有链接
-        linkElement.onclick = async (event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            
-            // 获取 href 属性
-            const href = linkElement.getAttribute("href");
-            if (href) {
-                // 处理相对路径和 app:// 协议
-                const cleanHref = href.replace("app://./renderer/", "");
-                try {
-                    await LiteLoader.api.openExternal(cleanHref);
-                } catch (error) {
-                    mditLogger("error", "Failed to open external link:", cleanHref, error);
-                }
-            }
-            return false;
-        };
-    });
 }
 
 async function renderSingleMsgBox(messageBox: HTMLElement) {
@@ -160,14 +130,8 @@ async function renderSingleMsgBox(messageBox: HTMLElement) {
 
     const markdownBody = messageBox;
 
-    // Handle click of Copy Code Button
-    addOnClickHandleForCopyButton(markdownBody);
-
-    // Handle click of Copy Latex Button
-    addOnClickHandleForLatexBlock(markdownBody);
-
-    // Handle open external link
-    handleExternalLink(markdownBody);
+    // Post-process (bind events, link openExternal, etc.)
+    postProcessRenderedMessageBox(markdownBody);
 
     // Add ShowOriginalContent button for this message.
     addShowOriginButtonToMarkdownBody(markdownBody, messageBox, msgBoxOriginalInnerHTML);

@@ -1,158 +1,88 @@
 const path = require("path");
 
-const rendererProcessConfig = {
-    resolve: {
-        alias: {
-            "@": path.resolve(__dirname, "src"),
+const SRC_DIR = path.resolve(__dirname, "src");
+const DIST_DIR = path.resolve(__dirname, "dist");
+
+const sharedResolve = {
+    alias: {
+        "@": SRC_DIR,
+    },
+    // Explicitly resolve files with following extension as modules.
+    extensions: [".js", ".jsx", ".ts", ".tsx"],
+};
+
+const sharedModuleRules = [
+    {
+        test: /\.(js|jsx)$/,
+        include: SRC_DIR,
+        exclude: /node_modules/,
+        use: {
+            loader: "babel-loader",
+            options: {
+                presets: ["@babel/preset-react"],
+            },
         },
-        // Explicitly resolve files with following extension as modules.
-        extensions: ['.js', '.jsx', '.ts', '.tsx'],
     },
-    experiments: {
-        outputModule: true,
+    {
+        test: /\.(ts|tsx)$/,
+        include: SRC_DIR,
+        exclude: /node_modules/,
+        use: {
+            loader: "babel-loader",
+            options: {
+                presets: ["@babel/preset-typescript", "@babel/preset-react"],
+            },
+        },
     },
-    target: 'electron-renderer',
+];
+
+function createProcessConfig({ target, entry, filename, libraryType, experiments, chunkFormat }) {
+    const config = {
+        resolve: sharedResolve,
+        target,
+        entry,
+        output: {
+            path: DIST_DIR,
+            filename,
+        },
+        module: {
+            rules: sharedModuleRules,
+        },
+    };
+
+    if (experiments) {
+        config.experiments = experiments;
+    }
+    if (libraryType) {
+        config.output.library = { type: libraryType };
+    }
+    if (chunkFormat) {
+        config.output.chunkFormat = chunkFormat;
+    }
+
+    return config;
+}
+
+const rendererProcessConfig = createProcessConfig({
+    target: "electron-renderer",
     entry: "./src/renderer.tsx",
-    output: {
-        path: path.resolve(__dirname, "dist"),
-        filename: 'renderer.js',
-        library: {
-            type: 'module', // necessary in order to work with liteloader.
-        },
-    },
-    module: {
-        rules: [
-            {
-                test: /.(js|jsx)$/,
-                include: path.resolve(__dirname, "src"),
-                exclude: /node_modules/,
-                use: {
-                    loader: "babel-loader",
-                    options: {
-                        presets: [
-                            '@babel/preset-react',
+    filename: "renderer.js",
+    libraryType: "module", // necessary in order to work with liteloader.
+    experiments: { outputModule: true },
+});
 
-                        ],
-                    }
-                },
-            },
-            {
-                test: /.(ts|tsx)$/,
-                include: path.resolve(__dirname, "src"),
-                exclude: /node_modules/,
-                use: {
-                    loader: "babel-loader",
-                    options: {
-                        presets: [
-                            '@babel/preset-typescript',
-                            '@babel/preset-react',
-                        ],
-                    }
-                },
-            },
-        ],
-    },
-};
-
-const mainProcessConfig = {
-    resolve: {
-        alias: {
-            "@": path.resolve(__dirname, "src"),
-        },
-        // Explicitly resolve files with following extension as modules.
-        extensions: ['.js', '.jsx', '.ts', '.tsx'],
-    },
-    // experiments: {
-    //     outputModule: true,
-    // },
-    target: 'electron-main',
+const mainProcessConfig = createProcessConfig({
+    target: "electron-main",
     entry: "./src/main.ts",
-    output: {
-        path: path.resolve(__dirname, "dist"),
-        filename: 'main.js',
-        library: {
-            type: 'commonjs-static', // necessary in order to work with liteloader.
-        },
-        chunkFormat: 'module', // or 'module'
-    },
-    module: {
-        rules: [
-            {
-                test: /.(js|jsx)$/,
-                include: path.resolve(__dirname, "src"),
-                exclude: /node_modules/,
-                use: {
-                    loader: "babel-loader",
-                    options: {
-                        presets: [
-                            '@babel/preset-react',
+    filename: "main.js",
+    libraryType: "commonjs-static", // necessary in order to work with liteloader.
+    chunkFormat: "module",
+});
 
-                        ],
-                    }
-                },
-            },
-            {
-                test: /.(ts|tsx)$/,
-                include: path.resolve(__dirname, "src"),
-                exclude: /node_modules/,
-                use: {
-                    loader: "babel-loader",
-                    options: {
-                        presets: [
-                            '@babel/preset-typescript',
-                            '@babel/preset-react',
-                        ],
-                    }
-                },
-            },
-        ],
-    },
-};
-
-const preloadProcessConfig = {
-    resolve: {
-        alias: {
-            "@": path.resolve(__dirname, "src"),
-        },
-        extensions: ['.js', '.jsx', '.ts', '.tsx'],
-    },
-    target: 'electron-preload',
+const preloadProcessConfig = createProcessConfig({
+    target: "electron-preload",
     entry: "./src/preload.ts",
-    output: {
-        path: path.resolve(__dirname, "dist"),
-        filename: 'preload.js',
-    },
-    module: {
-        rules: [
-            {
-                test: /.(js|jsx)$/,
-                include: path.resolve(__dirname, "src"),
-                exclude: /node_modules/,
-                use: {
-                    loader: "babel-loader",
-                    options: {
-                        presets: [
-                            '@babel/preset-react',
-                        ],
-                    }
-                },
-            },
-            {
-                test: /.(ts|tsx)$/,
-                include: path.resolve(__dirname, "src"),
-                exclude: /node_modules/,
-                use: {
-                    loader: "babel-loader",
-                    options: {
-                        presets: [
-                            '@babel/preset-typescript',
-                            '@babel/preset-react',
-                        ],
-                    }
-                },
-            },
-        ],
-    },
-};
+    filename: "preload.js",
+});
 
 module.exports = [rendererProcessConfig, mainProcessConfig, preloadProcessConfig];

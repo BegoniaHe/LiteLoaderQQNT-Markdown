@@ -2,8 +2,7 @@
 import React from "react";
 import markdownIt from "markdown-it";
 import { renderToString } from "react-dom/server";
-import hljs from "highlight.js";
-import katex from "@/lib/markdown-it-katex";
+import katex from "@traptitech/markdown-it-katex";
 
 // markdown-it 高级功能插件
 import markdownItFootnote from "markdown-it-footnote";
@@ -23,13 +22,14 @@ import { HighLightedCodeBlock, renderInlineCodeBlockString } from "@/components/
 import { useSettingsStore } from "@/states/settings";
 
 // Utils
-import { escapeHtml, purifyHtml, unescapeHtml } from "@/utils/htmlProc";
+import { purifyHtml, unescapeHtml } from "@/utils/htmlProc";
 import { mditLogger } from "@/utils/logger";
 
 // Config
-import { SELECTORS, CLASS_NAMES, MARKDOWN_CONFIG } from "@/config";
+import { SELECTORS, MARKDOWN_CONFIG } from "@/config";
 
-type ReplaceFunc = (parentElement: HTMLElement, id: string) => any;
+type ReplaceFunc = (parentElement: HTMLElement, id: string) => unknown;
+
 
 /**
  * Data type used by renderer to determine how to render and replace an element.
@@ -89,7 +89,9 @@ function getMarkdownIns() {
     }
     mditLogger("info", "Generating new markdown-it renderer...");
     const localMarkdownItIns = markdownIt({
-        html: true, // 在源码中启用 HTML 标签
+        // 仅在显式启用“HTML渲染”时才允许 markdown-it 解析原始 HTML
+        // 否则按纯文本处理，避免不必要的攻击面
+        html: settings.unescapeAllHtmlEntites === true,
         xhtmlOut: true, // 使用 '/' 来闭合单标签 （比如 <br />）。
         // 这个选项只对完全的 CommonMark 模式兼容。
         breaks: true, // 转换段落里的 '\n' 到 <br>。
@@ -158,7 +160,7 @@ interface FragmentProcessFuncRetType {
  * @param element
  * @returns
  */
-const textElementProcessor: FragmentProcessFunc = (parent, element, index) => {
+const textElementProcessor: FragmentProcessFunc = (parent, element, _index) => {
     // text processor
     const settings = useSettingsStore.getState();
 

@@ -18,13 +18,3 @@ export const IPC_CHANNELS = {
     CHECK_LOG_PERMISSION: "LiteLoader.markdown_it.check_log_permission",
 } as const;
 
-/**
- * 插件配置常量
- */
-export const PLUGIN_CONFIG = {
-    /** 插件 slug 前缀（用于配置存储） */
-    SLUG_PREFIX: "markdown_it",
-
-    /** 日志文件夹名称 */
-    LOG_FOLDER: "log",
-} as const;

@@ -1,6 +1,8 @@
 import { mditLogger } from "@/utils/logger";
 import { useSettingsStore } from "@/states/settings";
-import { CLASS_NAMES, DELAYS } from "@/config";
+import { DELAYS } from "@/config";
+import { postProcessRenderedMessageBox } from "@/render/postprocess";
+import { changeDirectionToColumnWhenLargerHeight } from "@/components/code_block";
 
 // 存储消息框的原始和渲染后的内容
 const messageContents = new WeakMap<HTMLElement, {
@@ -45,17 +47,15 @@ function createShowOriginalMenuItem(msgBox: HTMLElement): HTMLElement {
                 msgBox.innerHTML = content.rendered;
                 content.isShowingOriginal = false;
                 mditLogger("debug", "Content switched to rendered");
+
+                // 重新绑定渲染态需要的事件（innerHTML 会丢失事件监听）
+                postProcessRenderedMessageBox(msgBox);
+                changeDirectionToColumnWhenLargerHeight();
             } else {
                 // 切换到原始内容
                 msgBox.innerHTML = content.original;
                 content.isShowingOriginal = true;
                 mditLogger("debug", "Content switched to original");
-            }
-            
-            // 关闭右键菜单
-            const contextMenu = document.querySelector(".q-context-menu") as HTMLElement;
-            if (contextMenu) {
-                contextMenu.style.display = "none";
             }
         } catch (e) {
             mditLogger("error", "ShowOriginalContent - Failed to toggle content:", e);

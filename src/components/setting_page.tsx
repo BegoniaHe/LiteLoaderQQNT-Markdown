@@ -9,7 +9,6 @@ import { mditLogger } from "@/utils/logger";
  */
 export function SettingPage() {
     const settings = useSettingsStore((states) => states);
-    const updateSetting = useSettingsStore((states) => states.updateSetting);
 
     return (
         <>
@@ -166,8 +165,12 @@ function SwitchSettingTile({ settingName, title, caption }: SwitchSettingTilePro
             "force" + settingName.charAt(0).toUpperCase() + settingName.slice(1);
         return () => {
             try {
-                const forceMethod = (settings as any)[forceSettingName];
-                return typeof forceMethod === "function" ? forceMethod() : undefined;
+                const forceMethod = (settings as unknown as Record<string, unknown>)[
+                    forceSettingName
+                ];
+                return typeof forceMethod === "function"
+                    ? (forceMethod as () => boolean | undefined)()
+                    : undefined;
             } catch (e) {
                 return undefined;
             }

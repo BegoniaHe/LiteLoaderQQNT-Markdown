@@ -12,14 +12,53 @@ import he from "he";
  * - 使用textContent确保标签名以纯文本形式显示，防止任何潜在的HTML注入
  * - 这是防御深度策略的一部分：即使有标签绕过了初始净化，也会被转为纯文本
  */
-DOMPurify.addHook("uponSanitizeElement" as any, function (node: Element, data: any) {
-    if (data.allowedTags && data.allowedTags[data.tagName] === true) {
+DOMPurify.addHook("uponSanitizeElement", function (
+    currentNode: Node,
+    hookEvent: { tagName: string; allowedTags: Record<string, boolean> }
+) {
+    if (!(currentNode instanceof Element)) {
         return;
     }
+
+    if (hookEvent.allowedTags && hookEvent.allowedTags[hookEvent.tagName] === true) {
+        return;
+    }
+
     const newNode = document.createElement("p");
-    // 使用textContent而非outerHTML，仅保留标签名信息作为纯文本
-    newNode.textContent = `<${data.tagName}>`;
-    node.replaceWith(newNode);
+    newNode.textContent = `<${hookEvent.tagName}>`;
+    currentNode.replaceWith(newNode);
+});
+
+/**
+ * DOMPurify Hook: 过滤高风险属性值
+ *
+ * 这里采用“保留 style，但移除高危片段”的折中策略。
+ */
+DOMPurify.addHook("uponSanitizeAttribute", function (
+    _currentNode: Element,
+    hookEvent: { attrName: string; attrValue: string; keepAttr: boolean }
+) {
+    if (hookEvent.attrName !== "style") {
+        return;
+    }
+
+    const styleValue = String(hookEvent.attrValue ?? "").toLowerCase();
+
+    // 粗粒度拦截高危 CSS 片段（防止通过 url()/@import/expression 等方式做注入或资源加载）
+    // 注意：这里不做完整 CSS 解析，仅做保守过滤。
+    const isDangerous =
+        styleValue.includes("expression(") ||
+        styleValue.includes("url(") ||
+        styleValue.includes("@import") ||
+        styleValue.includes("javascript:") ||
+        styleValue.includes("vbscript:") ||
+        styleValue.includes("data:") ||
+        styleValue.includes("behavior:") ||
+        styleValue.includes("-moz-binding");
+
+    if (isDangerous) {
+        hookEvent.keepAttr = false;
+    }
 });
 
 /**
@@ -50,7 +89,7 @@ export function escapeHtml(input: string) {
  * 使用 DOMPurify 净化 HTML
  * 
  * 安全配置：
- * - 移除了 style 属性，防止 CSS 注入
+ * - 保留 style 属性（业务需要），但通过 Hook 过滤高危 CSS 片段
  * - 限制 data-* 属性为特定前缀
  * - 严格的标签和属性白名单
  * 
@@ -69,6 +108,8 @@ export function purifyHtml(input: string): string {
             "a",
             "code",
             "pre",
+            // 图片
+            "img",
             // 格式化标签
             "strong",
             "em",
@@ -115,6 +156,8 @@ export function purifyHtml(input: string): string {
             "details",
             "summary",
             "input",
+            // 结构化标签
+            "section",
             // KaTeX/MathML 数学公式标签
             "math",
             "semantics",
@@ -141,19 +184,6 @@ export function purifyHtml(input: string): string {
             "mstyle",
             "merror",
             "mphantom",
-            "svg",
-            "path",
-            "line",
-            "rect",
-            "circle",
-            "ellipse",
-            "polygon",
-            "polyline",
-            "g",
-            "defs",
-            "use",
-            "symbol",
-            "clipPath",
         ],
         // 允许的属性白名单
         ALLOWED_ATTR: [
@@ -163,6 +193,14 @@ export function purifyHtml(input: string): string {
             "href",
             "title",
             "alt",
+            // img
+            "src",
+            "srcset",
+            "loading",
+            "decoding",
+            "referrerpolicy",
+            "width",
+            "height",
             // markdown-it 脚注专用属性
             "data-footnote-id",
             "data-footnote-backref",
@@ -207,28 +245,6 @@ export function purifyHtml(input: string): string {
             "separators",
             "stretchy",
             "width",
-            // SVG 属性
-            "viewBox",
-            "preserveAspectRatio",
-            "x",
-            "y",
-            "width",
-            "height",
-            "d",
-            "fill",
-            "stroke",
-            "stroke-width",
-            "transform",
-            "points",
-            "x1",
-            "y1",
-            "x2",
-            "y2",
-            "cx",
-            "cy",
-            "r",
-            "rx",
-            "ry",
             // 可访问性属性
             "aria-label",
             "aria-hidden",
@@ -248,7 +264,7 @@ export function purifyHtml(input: string): string {
         ALLOW_DATA_ATTR: false,
         // 保持安全的 URI 协议
         ALLOWED_URI_REGEXP:
-            /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
+            /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp):|[^a-z]|[a-z+.-]+(?:[^a-z+.-:]|$))/i,
     });
     mditLogger("debug", "Purify", "Removed", DOMPurify.removed);
     return res;
