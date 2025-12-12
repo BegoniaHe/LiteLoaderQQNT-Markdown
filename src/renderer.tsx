@@ -26,7 +26,7 @@ const renderedMessages = new WeakSet<HTMLElement>();
 
 // 避免在宿主重复注入/热重载等场景下重复初始化
 const INIT_FLAG = "__markdown_it_renderer_inited__";
-const globalFlags = globalThis as typeof globalThis & Record<string, boolean>;
+const globalFlags = globalThis as typeof globalThis & Record<string, unknown>;
 if (!globalFlags[INIT_FLAG]) {
     globalFlags[INIT_FLAG] = true;
     onLoad();
@@ -87,9 +87,9 @@ async function renderSingleMsgBox(messageBox: HTMLElement) {
     // 同时添加 CSS 类名作为后备标记（供样式使用）
     messageBox.classList.add(CLASS_NAMES.MARKDOWN_RENDERED);
 
-    // original innerHTML for message box.
-    // This is captured and used by "Show Original" feature.
-    const msgBoxOriginalInnerHTML = messageBox.innerHTML;
+    // Capture original DOM nodes for "Show Original" feature.
+    // Use node clones instead of innerHTML to avoid string re-parse/injection boundary issues.
+    const msgBoxOriginalNodes = Array.from(messageBox.childNodes).map((node) => node.cloneNode(true));
 
     // Get all children of message box. Return if length is zero.
     const originalSpanList = Array.from(messageBox.children);
@@ -134,7 +134,7 @@ async function renderSingleMsgBox(messageBox: HTMLElement) {
     postProcessRenderedMessageBox(markdownBody);
 
     // Add ShowOriginalContent button for this message.
-    addShowOriginButtonToMarkdownBody(markdownBody, messageBox, msgBoxOriginalInnerHTML);
+    addShowOriginButtonToMarkdownBody(markdownBody, messageBox, msgBoxOriginalNodes);
 }
 
 function _onLoad() {
@@ -167,6 +167,15 @@ function _onLoad() {
     );
 
     // Observe the change of message list. Once changed, trigger render() function.
+    const existingObserver = globalFlags["__markdown_it_observer__"];
+    if (existingObserver instanceof MutationObserver) {
+        try {
+            existingObserver.disconnect();
+        } catch {
+            // ignore
+        }
+    }
+
     const observer = new MutationObserver((mutationsList) => {
         for (const mutation of mutationsList) {
             if (mutation.type === "childList") {
@@ -180,12 +189,38 @@ function _onLoad() {
         }
     });
     observer.observe(document.body, { childList: true, subtree: true });
+
+    // Best-effort cleanup (in case host triggers unload/navigation)
+    window.addEventListener(
+        "unload",
+        () => {
+            try {
+                observer.disconnect();
+            } catch {
+                // ignore
+            }
+        },
+        { once: true }
+    );
+
+    // Save globally to prevent duplicates and allow later disconnect.
+    globalFlags["__markdown_it_observer__"] = observer;
 }
 
 /**
  * Util function used in onLoad() to load local CSS.
  */
 function loadCSSFromURL(url: string, id?: string) {
+    if (id) {
+        const existing = document.getElementById(id);
+        if (existing && existing instanceof HTMLLinkElement) {
+            if (existing.href !== url) {
+                existing.href = url;
+            }
+            return;
+        }
+    }
+
     const link = document.createElement("link");
     link.rel = "stylesheet";
     link.href = url;

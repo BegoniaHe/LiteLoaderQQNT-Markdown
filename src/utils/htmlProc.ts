@@ -42,23 +42,30 @@ DOMPurify.addHook("uponSanitizeAttribute", function (
         return;
     }
 
-    const styleValue = String(hookEvent.attrValue ?? "").toLowerCase();
-
-    // 粗粒度拦截高危 CSS 片段（防止通过 url()/@import/expression 等方式做注入或资源加载）
-    // 注意：这里不做完整 CSS 解析，仅做保守过滤。
-    const isDangerous =
-        styleValue.includes("expression(") ||
-        styleValue.includes("url(") ||
-        styleValue.includes("@import") ||
-        styleValue.includes("javascript:") ||
-        styleValue.includes("vbscript:") ||
-        styleValue.includes("data:") ||
-        styleValue.includes("behavior:") ||
-        styleValue.includes("-moz-binding");
-
-    if (isDangerous) {
+    const originalStyle = String(hookEvent.attrValue ?? "");
+    if (!originalStyle.trim()) {
         hookEvent.keepAttr = false;
+        return;
     }
+
+    // 1) 针对“片段级”危险特征做更稳健的正则检测（忽略大小写/空白变体）
+    // 注意：这仍然不是完整 CSS 解析，但比简单 includes 更不容易被空白变体绕过。
+    const lower = originalStyle.toLowerCase();
+    const hasDangerousToken =
+        /expression\s*\(/i.test(lower) ||
+        /url\s*\(/i.test(lower) ||
+        /@import\b/i.test(lower) ||
+        /javascript\s*:/i.test(lower) ||
+        /vbscript\s*:/i.test(lower) ||
+        /data\s*:/i.test(lower) ||
+        /behavior\s*:/i.test(lower) ||
+        /-moz-binding\b/i.test(lower);
+
+    if (hasDangerousToken) {
+        hookEvent.keepAttr = false;
+        return;
+    }
+
 });
 
 /**
@@ -268,4 +275,19 @@ export function purifyHtml(input: string): string {
     });
     mditLogger("debug", "Purify", "Removed", DOMPurify.removed);
     return res;
+}
+
+/**
+ * 对 highlight.js 输出的 HTML 做更严格的二次净化。
+ *
+ * 设计目标：
+ * - 仅允许 <span>/<br> 与 class 属性
+ * - 不允许任何 style/href/src 等可能引入额外攻击面的属性
+ */
+export function purifyCodeHighlightHtml(input: string): string {
+    return DOMPurify.sanitize(input, {
+        ALLOWED_TAGS: ["span", "br"],
+        ALLOWED_ATTR: ["class"],
+        ALLOW_DATA_ATTR: false,
+    });
 }

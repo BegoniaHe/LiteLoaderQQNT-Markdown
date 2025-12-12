@@ -2,6 +2,7 @@ import React from "react";
 import type { SettingStateProperties } from "@/states/settings";
 import { useSettingsStore } from "@/states/settings";
 import { mditLogger } from "@/utils/logger";
+import { sanitizeExternalUrl } from "@/utils/url";
 
 /**
  * LiteLoaderQQNT 设置页面组件
@@ -179,7 +180,7 @@ function SwitchSettingTile({ settingName, title, caption }: SwitchSettingTilePro
 
     const forceValue = getForceValue();
     const settingsValue = forceValue ?? settings[settingName];
-    
+
     const isDisabled = forceValue !== undefined;
 
     return (
@@ -272,7 +273,12 @@ interface ButtonTileProps {
 function ButtonTile({ title, caption, href, path, callback, actionName }: ButtonTileProps) {
     const defaultCallback = () => {
         if (href) {
-            LiteLoader.api.openExternal(href);
+            const cleanHref = sanitizeExternalUrl(href);
+            if (!cleanHref) {
+                mditLogger("warn", "Blocked unsafe external link:", href);
+                return;
+            }
+            LiteLoader.api.openExternal(cleanHref);
             return;
         }
         if (path) {

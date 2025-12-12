@@ -1,5 +1,5 @@
 import * as path from "path";
-import { existsSync, mkdirSync, rmSync, createWriteStream, writeFileSync, unlinkSync } from "fs";
+import { existsSync, mkdirSync, createWriteStream, writeFileSync, unlinkSync } from "fs";
 import { PLUGIN_CONFIG } from "@/config";
 
 export const LogPathHelper = {
@@ -54,16 +54,6 @@ export const LogPathHelper = {
 export function generateMainProcessLogerWriter() {
     const logFolderPath = LogPathHelper.getLogFolderPath();
     const logFilePath = LogPathHelper.getLogFilePath();
-
-    console.log(`[markdown-it] logFolderPath: ${logFolderPath}`);
-    console.log(`[markdown-it] logFilePath: ${logFilePath}`);
-
-    // clear former log file
-    try {
-        rmSync(logFolderPath, { recursive: true });
-    } catch (e) {
-        console.error("[markdown-it] Failed to remove previous log file:", e);
-    }
 
     // create dir if not exists
     try {

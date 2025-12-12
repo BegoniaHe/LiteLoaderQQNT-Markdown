@@ -5,7 +5,7 @@ type Token = MarkdownIt.Token;
 type Renderer = MarkdownIt.Renderer;
 type Options = MarkdownIt.Options;
 
-import { unescapeHtml, escapeHtml } from "@/utils/htmlProc";
+import { unescapeHtml, escapeHtml, purifyCodeHighlightHtml } from "@/utils/htmlProc";
 import { useSettingsStore } from "@/states/settings";
 import { mditLogger } from "@/utils/logger";
 import { CLASS_NAMES, SELECTORS, PERFORMANCE } from "@/config";
@@ -29,10 +29,11 @@ export function HighLightedCodeBlock({
     markdownItIns: _markdownItIns,
 }: HighLightedCodeBlockProps) {
 
-    // 检查语言是否受支持
-    if (!lang || !hljs.getLanguage(lang)) {
-        lang = "plaintext";
-    }
+    // 显示用语言标签：尽量保留原始 lang
+    const displayLang = lang || "plaintext";
+
+    // 高亮用语言：仅在 hljs 支持时启用，否则降级为 plaintext
+    const highlightLang = lang && hljs.getLanguage(lang) ? lang : "plaintext";
 
     /**
      * 代码内容预处理
@@ -54,9 +55,13 @@ export function HighLightedCodeBlock({
     let finalContent = "";
     try {
         finalContent = hljs.highlight(contentPreprocess(content), {
-            language: lang,
+            language: highlightLang,
             ignoreIllegals: true,
         }).value;
+
+        // highlight.js 输出为 HTML 字符串，这里再做一次严格白名单净化
+        // 仅保留 span/br + class，避免意外属性/标签进入 DOM
+        finalContent = purifyCodeHighlightHtml(finalContent);
     } catch (e) {
         mditLogger("error", `hljs error:`, e);
     }
@@ -64,7 +69,7 @@ export function HighLightedCodeBlock({
     return (
         <pre className={`hljs ${CLASS_NAMES.HL_CODE_BLOCK} ${CLASS_NAMES.MDIT_FENCED_CODE_BLOCK}`}>
             <button className="lang_copy">
-                <p className="lang">{lang}</p>
+                <p className="lang">{displayLang}</p>
                 <p className="copy">复制</p>
             </button>
             <code dangerouslySetInnerHTML={{ __html: finalContent }}></code>

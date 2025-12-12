@@ -1,5 +1,6 @@
 import { addOnClickHandleForCopyButton, addOnClickHandleForLatexBlock } from "@/components/code_block";
 import { mditLogger } from "@/utils/logger";
+import { sanitizeExternalUrl } from "@/utils/url";
 
 /**
  * 对“已渲染成 HTML 的消息框”执行后处理（事件绑定等）。
@@ -24,7 +25,11 @@ export function postProcessRenderedMessageBox(messageBox: HTMLElement): void {
 
             const href = linkElement.getAttribute("href");
             if (href) {
-                const cleanHref = href.replace("app://./renderer/", "");
+                const cleanHref = sanitizeExternalUrl(href);
+                if (!cleanHref) {
+                    mditLogger("warn", "Blocked unsafe external link:", href);
+                    return false;
+                }
                 try {
                     await LiteLoader.api.openExternal(cleanHref);
                 } catch (error) {
