@@ -152,14 +152,21 @@ export function addOnClickHandleForLatexBlock(element: HTMLElement): void {
 /**
  * 当消息高度超过阈值时，将布局改为列布局
  * 优化长消息的显示效果
+ * 
+ * Performance optimization: use class name to mark and avoid repeated processing
  */
 export function changeDirectionToColumnWhenLargerHeight(): void {
     const msgBlocks = document.querySelectorAll(SELECTORS.MIX_MESSAGE_INNER);
 
     Array.from(msgBlocks).forEach((block) => {
         const htmlBlock = block as HTMLElement;
-        const height = htmlBlock.offsetHeight;
+        
+        // Performance optimization: skip already processed message blocks
+        if (htmlBlock.classList.contains(CLASS_NAMES.LAYOUT_ADJUSTED)) {
+            return;
+        }
 
+        const height = htmlBlock.offsetHeight;
         mditLogger("debug", "Detected messagebox height:", height);
 
         // 当消息高度超过阈值时，改为列布局
@@ -168,5 +175,8 @@ export function changeDirectionToColumnWhenLargerHeight(): void {
         } else {
             htmlBlock.style.flexDirection = "row";
         }
+        
+        // 标记为已处理，避免下次重复检查
+        htmlBlock.classList.add(CLASS_NAMES.LAYOUT_ADJUSTED);
     });
 }

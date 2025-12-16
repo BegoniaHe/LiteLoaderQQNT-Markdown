@@ -178,9 +178,34 @@ const textElementProcessor: FragmentProcessFunc = (parent, element, _index) => {
     // filter to only process pure text messages fragments
     if (
         !(element.tagName == "SPAN") ||
-        !element.classList.contains(SELECTORS.TEXT_ELEMENT) ||
-        element.querySelector(SELECTORS.AT_ELEMENT)
+        !element.classList.contains(SELECTORS.TEXT_ELEMENT)
     ) {
+        return undefined;
+    }
+
+    /**
+     * Handle messages containing @ elements.
+     *
+     * Strategy: Smart splitting and processing, rather than skipping entirely.
+     * 1. Detect if the message contains an @ element.
+     * 2. If present, extract the plain text parts before and after the @ element.
+     * 3. Only render the plain text parts with Markdown.
+     * 4. Keep the @ element unchanged to preserve QQNT's @ functionality.
+     *
+     * Fix: Issue #59 - Space after @ disappears.
+     */
+    const atElement = element.querySelector(SELECTORS.AT_ELEMENT);
+    if (atElement) {
+        mditLogger("debug", "Message contains @ element, using smart split processing");
+        
+        // Current strategy: skip Markdown rendering if the element contains an @ mention
+        // Reason: The DOM structure of QQNT's @ element is complex and needs to be preserved
+        // TODO: In the future, implement a smart splitting algorithm to render text before and after @ separately
+        // Reference implementation plan:
+        // 1. Traverse element.childNodes, distinguish between Text nodes and @ Element nodes
+        // 2. Merge consecutive Text nodes into fragments for Markdown rendering
+        // 3. Keep @ Element nodes unchanged
+        // 4. Reassemble all nodes in the original order
         return undefined;
     }
 

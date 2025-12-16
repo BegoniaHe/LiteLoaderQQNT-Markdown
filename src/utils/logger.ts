@@ -3,6 +3,7 @@
  */
 
 import { useSettingsStore } from "@/states/settings";
+import { SELECTORS } from "@/config";
 
 type DistributiveFilter<Origin, Filter> = Origin extends Filter ? Origin : never;
 
@@ -83,9 +84,7 @@ export function elementDebugLogger() {
         return;
     }
     mditLogger("info", "ElementCapture triggered");
-    const codeEle = document.querySelectorAll(
-        "div.message-content__wrapper div.container--self code"
-    );
+    const codeEle = document.querySelectorAll(SELECTORS.DEBUG_MESSAGE_WRAPPER);
 
     // Add flag class for all marked --mdit-debug-capture-element
     Array.from(codeEle)

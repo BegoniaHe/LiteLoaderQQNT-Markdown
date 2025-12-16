@@ -58,34 +58,34 @@ span.katex-html {
 
 blockquote {
     padding: 0 1em;
-    border-left: 0.25em solid #dfe2e5;
+    border-left: 0.25em solid var(--border-color, #dfe2e5);
 }
 
 @media (prefers-color-scheme: light) {
     a.markdown_it_link {
-        color: #1589e9;
+        color: var(--link-color, #1589e9);
         text-decoration: underline;
     }
 
     /* If the link is inside self-sent message, use white text */
     /* Notice, this solution could work with LiteLoader theme (tested on Windows)*/
     div.container--self a.markdown_it_link {
-        color: white;
+        color: var(--link-color-self, white);
     }
 
     a.markdown_it_link:hover {
-        color: #30a9de;
+        color: var(--link-color-hover, #30a9de);
     }
 }
 
 @media (prefers-color-scheme: dark) {
     a.markdown_it_link {
-        color: white;
+        color: var(--link-color-dark, white);
         text-decoration: underline;
     }
 
     a.markdown_it_link:hover {
-        color: #9ab4cf;
+        color: var(--link-color-hover-dark, #9ab4cf);
     }
 }
 
@@ -209,7 +209,7 @@ pre.mdit-fenced-code-block > code {
 .footnote-ref {
     vertical-align: super;
     font-size: 0.75em;
-    color: #0366d6;
+    color: var(--link-color, #0366d6);
     text-decoration: none;
     padding: 0 0.2em;
 }
@@ -251,16 +251,16 @@ pre.mdit-fenced-code-block > code {
 
 /* 高亮文本 (==marked==) */
 .message-content mark {
-    background-color: #ffeb3b;
-    color: #000;
+    background-color: var(--mark-bg-light, #ffeb3b);
+    color: var(--mark-text-light, #000);
     padding: 0.1em 0.3em;
     border-radius: 2px;
 }
 
 @media (prefers-color-scheme: dark) {
     .message-content mark {
-        background-color: #ffc107;
-        color: #000;
+        background-color: var(--mark-bg-dark, #ffc107);
+        color: var(--mark-text-dark, #000);
     }
 }
 
@@ -314,14 +314,14 @@ pre.mdit-fenced-code-block > code {
 /* 插入和删除文本 */
 .message-content ins {
     text-decoration: none;
-    background-color: #d4fcbc;
+    background-color: var(--ins-bg-light, #d4fcbc);
     padding: 0.1em 0.2em;
     border-radius: 2px;
 }
 
 .message-content del {
     text-decoration: line-through;
-    background-color: #ffeef0;
+    background-color: var(--del-bg-light, #ffeef0);
     padding: 0.1em 0.2em;
     border-radius: 2px;
     opacity: 0.8;
@@ -329,13 +329,13 @@ pre.mdit-fenced-code-block > code {
 
 @media (prefers-color-scheme: dark) {
     .message-content ins {
-        background-color: #2ea043;
-        color: #fff;
+        background-color: var(--ins-bg-dark, #2ea043);
+        color: var(--ins-text-dark, #fff);
     }
 
     .message-content del {
-        background-color: #da3633;
-        color: #fff;
+        background-color: var(--del-bg-dark, #da3633);
+        color: var(--del-text-dark, #fff);
     }
 }
 
@@ -370,9 +370,9 @@ pre.mdit-fenced-code-block > code {
     font-family: "Consolas", "Monaco", "Courier New", monospace;
     font-size: 0.85em;
     line-height: 1.4;
-    color: #24292f;
-    background-color: #f6f8fa;
-    border: 1px solid #d0d7de;
+    color: var(--kbd-text-light, #24292f);
+    background-color: var(--kbd-bg-light, #f6f8fa);
+    border: 1px solid var(--kbd-border-light, #d0d7de);
     border-radius: 6px;
     box-shadow:
         0 2px 0 rgba(0, 0, 0, 0.1),
@@ -383,9 +383,9 @@ pre.mdit-fenced-code-block > code {
 
 @media (prefers-color-scheme: dark) {
     .message-content kbd {
-        color: #e6edf3;
-        background-color: #161b22;
-        border-color: #30363d;
+        color: var(--kbd-text-dark, #e6edf3);
+        background-color: var(--kbd-bg-dark, #161b22);
+        border-color: var(--kbd-border-dark, #30363d);
         box-shadow:
             0 2px 0 rgba(0, 0, 0, 0.3),
             inset 0 0 0 1px rgba(255, 255, 255, 0.05);

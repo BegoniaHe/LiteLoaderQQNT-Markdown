@@ -47,6 +47,9 @@ export const SELECTORS = {
 
     /** LaTeX 注释元素 */
     LATEX_ANNOTATION: 'annotation[encoding="application/x-tex"]',
+
+    /** 调试用：消息内容包装器 */
+    DEBUG_MESSAGE_WRAPPER: "div.message-content__wrapper div.container--self code",
 } as const;
 
 /**
@@ -76,6 +79,9 @@ export const CLASS_NAMES = {
 
     /** 显示原始内容按钮 */
     SHOW_ORIGIN_BUTTON: "mdit-show-origin-button",
+
+    /** 标记消息块布局已调整 */
+    LAYOUT_ADJUSTED: "mdit-layout-adjusted",
 } as const;
 
 /**
