@@ -102,7 +102,7 @@ function createShowOriginalMenuItem(msgBox: HTMLElement): HTMLElement {
 /**
  * 为 Markdown 渲染的消息框添加右键菜单"显示原文/渲染原文"功能
  * 通过监听消息框的 contextmenu 事件来注入菜单项
- * 
+ *
  * @param markdownBody - Markdown 渲染后的内容元素
  * @param msgBox - 消息框元素
  * @param originalInnerHTML - 原始 HTML 内容

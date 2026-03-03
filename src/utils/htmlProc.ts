@@ -12,61 +12,66 @@ import he from "he";
  * - 使用textContent确保标签名以纯文本形式显示，防止任何潜在的HTML注入
  * - 这是防御深度策略的一部分：即使有标签绕过了初始净化，也会被转为纯文本
  */
-DOMPurify.addHook("uponSanitizeElement", function (
-    currentNode: Node,
-    hookEvent: { tagName: string; allowedTags: Record<string, boolean> }
-) {
-    if (!(currentNode instanceof Element)) {
-        return;
-    }
+DOMPurify.addHook(
+    "uponSanitizeElement",
+    function (
+        currentNode: Node,
+        hookEvent: { tagName: string; allowedTags: Record<string, boolean> }
+    ) {
+        if (!(currentNode instanceof Element)) {
+            return;
+        }
 
-    if (hookEvent.allowedTags && hookEvent.allowedTags[hookEvent.tagName] === true) {
-        return;
-    }
+        if (hookEvent.allowedTags && hookEvent.allowedTags[hookEvent.tagName] === true) {
+            return;
+        }
 
-    const newNode = document.createElement("p");
-    newNode.textContent = `<${hookEvent.tagName}>`;
-    currentNode.replaceWith(newNode);
-});
+        const newNode = document.createElement("p");
+        newNode.textContent = `<${hookEvent.tagName}>`;
+        currentNode.replaceWith(newNode);
+    }
+);
 
 /**
  * DOMPurify Hook: 过滤高风险属性值
  *
  * 这里采用“保留 style，但移除高危片段”的折中策略。
  */
-DOMPurify.addHook("uponSanitizeAttribute", function (
-    _currentNode: Element,
-    hookEvent: { attrName: string; attrValue: string; keepAttr: boolean }
-) {
-    if (hookEvent.attrName !== "style") {
-        return;
+DOMPurify.addHook(
+    "uponSanitizeAttribute",
+    function (
+        _currentNode: Element,
+        hookEvent: { attrName: string; attrValue: string; keepAttr: boolean }
+    ) {
+        if (hookEvent.attrName !== "style") {
+            return;
+        }
+
+        const originalStyle = String(hookEvent.attrValue ?? "");
+        if (!originalStyle.trim()) {
+            hookEvent.keepAttr = false;
+            return;
+        }
+
+        // 1) 针对“片段级”危险特征做更稳健的正则检测（忽略大小写/空白变体）
+        // 注意：这仍然不是完整 CSS 解析，但比简单 includes 更不容易被空白变体绕过。
+        const lower = originalStyle.toLowerCase();
+        const hasDangerousToken =
+            /expression\s*\(/i.test(lower) ||
+            /url\s*\(/i.test(lower) ||
+            /@import\b/i.test(lower) ||
+            /javascript\s*:/i.test(lower) ||
+            /vbscript\s*:/i.test(lower) ||
+            /data\s*:/i.test(lower) ||
+            /behavior\s*:/i.test(lower) ||
+            /-moz-binding\b/i.test(lower);
+
+        if (hasDangerousToken) {
+            hookEvent.keepAttr = false;
+            return;
+        }
     }
-
-    const originalStyle = String(hookEvent.attrValue ?? "");
-    if (!originalStyle.trim()) {
-        hookEvent.keepAttr = false;
-        return;
-    }
-
-    // 1) 针对“片段级”危险特征做更稳健的正则检测（忽略大小写/空白变体）
-    // 注意：这仍然不是完整 CSS 解析，但比简单 includes 更不容易被空白变体绕过。
-    const lower = originalStyle.toLowerCase();
-    const hasDangerousToken =
-        /expression\s*\(/i.test(lower) ||
-        /url\s*\(/i.test(lower) ||
-        /@import\b/i.test(lower) ||
-        /javascript\s*:/i.test(lower) ||
-        /vbscript\s*:/i.test(lower) ||
-        /data\s*:/i.test(lower) ||
-        /behavior\s*:/i.test(lower) ||
-        /-moz-binding\b/i.test(lower);
-
-    if (hasDangerousToken) {
-        hookEvent.keepAttr = false;
-        return;
-    }
-
-});
+);
 
 /**
  * Unescape HTML entities in HTML string using he.js library.
@@ -94,12 +99,12 @@ export function escapeHtml(input: string) {
 
 /**
  * 使用 DOMPurify 净化 HTML
- * 
+ *
  * 安全配置：
  * - 保留 style 属性（业务需要），但通过 Hook 过滤高危 CSS 片段
  * - 限制 data-* 属性为特定前缀
  * - 严格的标签和属性白名单
- * 
+ *
  * @param {string} input - 待净化的HTML字符串
  * @return {string} 净化后的HTML字符串
  */

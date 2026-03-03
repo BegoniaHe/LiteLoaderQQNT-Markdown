@@ -22,9 +22,11 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
 
-    - name: Build
+    - name: Lint, Check and Build
       run: |
         npm install
+        npm run lint
+        npm run check
         npm run release
         unzip release.zip -d ./artifact_content
         rm release.zip

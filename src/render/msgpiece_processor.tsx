@@ -30,7 +30,6 @@ import { SELECTORS, MARKDOWN_CONFIG } from "@/config";
 
 type ReplaceFunc = (parentElement: HTMLElement, id: string) => unknown;
 
-
 /**
  * Data type used by renderer to determine how to render and replace an element.
  */
@@ -176,10 +175,7 @@ const textElementProcessor: FragmentProcessFunc = (parent, element, _index) => {
     }
 
     // filter to only process pure text messages fragments
-    if (
-        !(element.tagName == "SPAN") ||
-        !element.classList.contains(SELECTORS.TEXT_ELEMENT)
-    ) {
+    if (!(element.tagName == "SPAN") || !element.classList.contains(SELECTORS.TEXT_ELEMENT)) {
         return undefined;
     }
 
@@ -197,7 +193,7 @@ const textElementProcessor: FragmentProcessFunc = (parent, element, _index) => {
     const atElement = element.querySelector(SELECTORS.AT_ELEMENT);
     if (atElement) {
         mditLogger("debug", "Message contains @ element, using smart split processing");
-        
+
         // Current strategy: skip Markdown rendering if the element contains an @ mention
         // Reason: The DOM structure of QQNT's @ element is complex and needs to be preserved
         // TODO: In the future, implement a smart splitting algorithm to render text before and after @ separately
@@ -214,12 +210,12 @@ const textElementProcessor: FragmentProcessFunc = (parent, element, _index) => {
 
     /**
      * HTML实体处理器
-     * 
+     *
      * 安全策略（修复后）：
      * - 移除了手动正则替换逻辑，避免绕过风险
      * - 完全依赖 he.decode() 进行实体解码
      * - 依赖 DOMPurify 作为最终安全防线
-     * 
+     *
      * @param x - 输入的HTML字符串
      * @returns 处理后的字符串
      */

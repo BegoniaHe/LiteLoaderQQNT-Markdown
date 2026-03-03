@@ -42,7 +42,7 @@ const debouncedRender = debounce(PERFORMANCE.DEBOUNCE_DELAY, render, { atBegin: 
  * Root markdown render function.
  *
  * This function will get called once change of msgList is detected and a possible rerender is required.
- * 
+ *
  * 修复说明：
  * - 使用 Promise.all() 等待所有消息渲染完成
  * - 解决了后处理函数在渲染完成前执行的竞态条件问题
@@ -89,7 +89,9 @@ async function renderSingleMsgBox(messageBox: HTMLElement) {
 
     // Capture original DOM nodes for "Show Original" feature.
     // Use node clones instead of innerHTML to avoid string re-parse/injection boundary issues.
-    const msgBoxOriginalNodes = Array.from(messageBox.childNodes).map((node) => node.cloneNode(true));
+    const msgBoxOriginalNodes = Array.from(messageBox.childNodes).map((node) =>
+        node.cloneNode(true)
+    );
 
     // Get all children of message box. Return if length is zero.
     const originalSpanList = Array.from(messageBox.children);

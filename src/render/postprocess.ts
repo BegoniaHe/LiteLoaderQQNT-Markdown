@@ -1,4 +1,7 @@
-import { addOnClickHandleForCopyButton, addOnClickHandleForLatexBlock } from "@/components/code_block";
+import {
+    addOnClickHandleForCopyButton,
+    addOnClickHandleForLatexBlock,
+} from "@/components/code_block";
 import { mditLogger } from "@/utils/logger";
 import { sanitizeExternalUrl } from "@/utils/url";
 

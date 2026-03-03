@@ -103,7 +103,11 @@ export function elementDebugLogger() {
         .filter((ele) => !ele.classList.contains(loggedClassName)) // ensure one message box will only be logged one time
         .forEach((ele) => {
             // 文件日志已禁用，仅输出到控制台
-            mditLogger("debug", `Element captured: ${ele.tagName}`, ele.outerHTML.substring(0, 500));
+            mditLogger(
+                "debug",
+                `Element captured: ${ele.tagName}`,
+                ele.outerHTML.substring(0, 500)
+            );
 
             ele.classList.add(loggedClassName);
             loggedCount++;

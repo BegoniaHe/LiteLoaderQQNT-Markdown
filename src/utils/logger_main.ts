@@ -1,6 +1,6 @@
-import * as path from "path";
-import { existsSync, mkdirSync, createWriteStream, writeFileSync, unlinkSync } from "fs";
 import { PLUGIN_CONFIG } from "@/config";
+import { createWriteStream, existsSync, mkdirSync, unlinkSync, writeFileSync } from "fs";
+import * as path from "path";
 
 export const LogPathHelper = {
     getLogFolderPath() {
@@ -14,22 +14,22 @@ export const LogPathHelper = {
     checkLogPermission(): boolean {
         try {
             const logFolderPath = this.getLogFolderPath();
-            
+
             // 尝试创建日志目录
             if (!existsSync(logFolderPath)) {
                 mkdirSync(logFolderPath, { recursive: true });
             }
-            
+
             // 尝试写入测试文件
-            const testFilePath = path.join(logFolderPath, '.permission_test');
-            writeFileSync(testFilePath, 'test');
-            
+            const testFilePath = path.join(logFolderPath, ".permission_test");
+            writeFileSync(testFilePath, "test");
+
             // 清理测试文件
             unlinkSync(testFilePath);
-            
+
             return true;
         } catch (error) {
-            console.warn('[markdown-it] 无日志目录写入权限:', error);
+            console.warn("[markdown-it] 无日志目录写入权限:", error);
             return false;
         }
     },
@@ -79,7 +79,7 @@ export function generateMainProcessLogerWriter() {
             }
             try {
                 return str + JSON.stringify(value) + " ";
-            } catch (e) {
+            } catch {
                 // 处理循环引用等无法序列化的情况
                 return str + String(value) + " ";
             }

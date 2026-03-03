@@ -17,4 +17,3 @@ export const IPC_CHANNELS = {
     /** 检查日志目录权限通道 */
     CHECK_LOG_PERMISSION: "LiteLoader.markdown_it.check_log_permission",
 } as const;
-

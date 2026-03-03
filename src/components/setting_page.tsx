@@ -1,8 +1,8 @@
-import React from "react";
 import type { SettingStateProperties } from "@/states/settings";
 import { useSettingsStore } from "@/states/settings";
 import { mditLogger } from "@/utils/logger";
 import { sanitizeExternalUrl } from "@/utils/url";
+import React from "react";
 
 /**
  * LiteLoaderQQNT 设置页面组件
@@ -172,7 +172,7 @@ function SwitchSettingTile({ settingName, title, caption }: SwitchSettingTilePro
                 return typeof forceMethod === "function"
                     ? (forceMethod as () => boolean | undefined)()
                     : undefined;
-            } catch (e) {
+            } catch {
                 return undefined;
             }
         };

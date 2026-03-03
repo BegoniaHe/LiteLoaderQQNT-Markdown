@@ -3,6 +3,8 @@
  * 统一声明 LiteLoaderQQNT 提供的全局对象和类型
  */
 
+import type React from "react";
+
 /**
  * LiteLoaderQQNT 插件接口定义
  * 基于 LiteLoaderQQNT 1.4.1 源码
@@ -72,6 +74,22 @@ interface LiteLoaderAPI {
  */
 declare global {
     const LiteLoader: LiteLoaderAPI;
+}
+
+type SettingElementProps = React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
+
+declare module "react" {
+    namespace JSX {
+        interface IntrinsicElements {
+            "setting-section": SettingElementProps;
+            "setting-panel": SettingElementProps;
+            "setting-list": SettingElementProps;
+            "setting-item": SettingElementProps;
+            "setting-switch": SettingElementProps;
+            "setting-text": SettingElementProps;
+            "setting-button": SettingElementProps;
+        }
+    }
 }
 
 export {};

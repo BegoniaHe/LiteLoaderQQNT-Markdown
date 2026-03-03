@@ -14,13 +14,14 @@ const _storage = {
         );
     },
     async setItem(name: string, value: string) {
-        let parsedValue: unknown = emptyStorageState;
-        try {
-            parsedValue = JSON.parse(value);
-        } catch {
-            // 当本地持久化内容损坏时，回退为空配置，避免阻塞插件加载/设置页
-            parsedValue = emptyStorageState;
-        }
+        const parsedValue: unknown = (() => {
+            try {
+                return JSON.parse(value);
+            } catch {
+                // 当本地持久化内容损坏时，回退为空配置，避免阻塞插件加载/设置页
+                return emptyStorageState;
+            }
+        })();
 
         return await LiteLoader.api.config.set(
             `${PLUGIN_CONFIG.SLUG_PREFIX}/${name}`,
