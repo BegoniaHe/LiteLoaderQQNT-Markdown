@@ -1,45 +1,48 @@
-部分情况下，您可能需要获取本插件的调试信息。
+# 调试指南
 
-# 确保已开启调试输出
+本文档说明如何在遇到问题时获取本插件的调试信息。
 
-首先，请确保您已经开启本插件的调试信息输出功能，包括 `控制台输出` 以及 `日志文件输出` 。
+---
 
-![image](https://github.com/d0j1a1701/LiteLoaderQQNT-Markdown/assets/61616918/ca06d6e6-60b7-45c2-85bc-111b69bf47be)
+## 开启控制台日志输出
 
-## 开启元素抓取
+进入 QQ 设置 → LiteLoader → Markdown-it 设置页，确认「控制台输出」选项已开启。
 
-部分情况下，开发者可能需要相关的元素调试信息来定位问题，您可以开启本插件设置中的 `启用元素调试` 功能。
+开启后，插件在运行过程中会向 DevTools 控制台输出以 `[MarkdownIt]` 为前缀的调试信息，包括：
 
-![image](https://github.com/d0j1a1701/LiteLoaderQQNT-Markdown/assets/61616918/1bf4e4d5-e3f4-4190-9c10-4b6153103fb7)
+- 渲染触发事件
+- 新发现的消息数量
+- 每条消息的渲染过程
+- 错误和异常信息
 
+---
 
-启用该功能后，当您发送的消息包含：\`--mdit-debug-capture-element\` 时（需包含\`符号，该标志将会被渲染为`code`元素），该消息会被作为调试用消息进行抓取，并将相关信息保存到日志文件中。**在本功能启用时，请确保您发送的调试消息不包含任何您不想让其他人看到的敏感信息。** 请看下例：
+## 打开 DevTools 控制台
 
-- 消息框中输入的消息
+在 QQNT 窗口中按下 `Ctrl + Shift + I`（Windows/Linux）或 `Cmd + Option + I`（macOS）即可打开开发者工具。
 
-![image](https://github.com/d0j1a1701/LiteLoaderQQNT-Markdown/assets/61616918/db4b29ee-1ec3-4c76-85ce-d5c2639ef254)
+切换到「Console（控制台）」标签，在过滤框中输入 `[MarkdownIt]` 可以只查看本插件的输出。
 
-- 消息渲染结果
+> 如果快捷键无效，说明你的 QQNT 版本未开启远程调试。部分 LiteLoaderQQNT 插件（如「Dev Tools」）可以帮助启用该功能。
 
-![image](https://github.com/d0j1a1701/LiteLoaderQQNT-Markdown/assets/61616918/4dab43b9-6988-4f55-be0a-e84514e2e8f8)
+---
 
-为保证隐私性，只有自己发送的消息才能被标记为调试消息。
+## 启用元素调试抓取
 
+部分情况下，开发者需要查看特定消息的 DOM 结构来定位问题。插件提供了「元素调试抓取」功能：
 
-# 进入日志文件目录
+1. 在插件设置页开启「启用元素调试」选项。
+2. 发送一条包含 `` `--mdit-debug-capture-element` `` 的消息（需带反引号，该标志将被渲染为 `<code>` 元素）。
+3. 该消息将被标记为调试消息，相关 DOM 信息会输出到控制台。
 
-首先进入 `LiteLoaderQQNT` 插件设置页面，进入数据目录。
+> **隐私说明**：出于隐私保护，只有**自己发送**的消息才能被标记为调试消息。请勿在调试消息中包含任何敏感信息。
 
-![image](https://github.com/d0j1a1701/LiteLoaderQQNT-Markdown/assets/61616918/bbbae1b8-fdd1-4daa-848f-1ec654dc9407)
+---
 
-随后依次进入 `plugins -> markdown_it -> log`，便能看到所有日志文件。
+## 向开发者反馈
 
-> 如果目录不存在，一般是由于之前从未开启过日志文件输出功能。在完成上一步开启调试输出后，重启QQ即可。
+收集到控制台输出后，可通过以下方式反馈：
 
-# 提供文件给开发者
-
-您可以直接将文件发送给相关的开发者，也可以选择用文本编辑工具打开 `.log` 文件并复制其内容进行分享。如果目录内存在多个文件，一般情况下请提供最新的文件。
-
-# 清理日志文件
-
-您可以在 `QQNT` 未启动的情况下，直接删除日志文件中的所有日志。
+1. 截图控制台报错信息。
+2. 将控制台内容复制为文本。
+3. 在 [GitHub Issues](https://github.com/BegoniaHe/LiteLoaderQQNT-Markdown/issues/new) 提交时附上上述信息，同时说明操作系统、QQNT 版本和复现步骤。
