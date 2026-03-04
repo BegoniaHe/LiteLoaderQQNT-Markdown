@@ -1,10 +1,16 @@
 import { PLUGIN_CONFIG } from "@/config";
+import { resolvePluginDataPath } from "@/utils/plugin_identity";
 import { createWriteStream, existsSync, mkdirSync, unlinkSync, writeFileSync } from "fs";
 import * as path from "path";
 
 export const LogPathHelper = {
     getLogFolderPath() {
-        return path.join(LiteLoader.plugins.markdown_it.path.data, PLUGIN_CONFIG.LOG_FOLDER);
+        const dataPath = resolvePluginDataPath();
+        if (dataPath) {
+            return path.join(dataPath, PLUGIN_CONFIG.LOG_FOLDER);
+        }
+
+        return path.join(LiteLoader.path.data, PLUGIN_CONFIG.SLUG, PLUGIN_CONFIG.LOG_FOLDER);
     },
 
     /**

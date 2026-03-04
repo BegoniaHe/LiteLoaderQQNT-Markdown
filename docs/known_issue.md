@@ -35,3 +35,14 @@
 **状态**：跟踪中
 
 本插件注入的 Markdown 样式（`src/style/markdown.css`）在特定第三方主题下可能出现字体、间距或颜色冲突。目前尚无通用解决方案，建议在主题的 Issue 区或本插件 Issue 区报告具体冲突情况。
+
+---
+
+## 通过插件列表安装时报错 `boolean false is not iterable`
+
+**影响版本**：LiteLoaderQQNT 部分版本 + 本插件旧 slug（`markdown_it`）  
+**状态**：已在插件侧规避（slug 迁移到 `markdown_it_v4`）
+
+该错误来自 LiteLoaderQQNT 安装流程中的删除逻辑类型不匹配，并非本插件压缩包结构问题。
+
+若你此前安装过旧版本，请先卸载旧版本（或手动删除旧目录 `markdown_it`）后再安装当前版本。

@@ -13,6 +13,7 @@ import { useSettingsStore } from "@/states/settings";
 // Utils
 import { processorList } from "@/render/msgpiece_processor";
 import { postProcessRenderedMessageBox } from "@/render/postprocess";
+import { resolvePluginPath } from "@/utils/plugin_identity";
 import { debounce } from "throttle-debounce";
 import { elementDebugLogger, mditLogger } from "./utils/logger";
 
@@ -175,7 +176,11 @@ function applyCodeHighlightTheme(pluginPath: string, isFollowSystem: boolean): v
 }
 
 function _onLoad() {
-    const plugin_path = LiteLoader.plugins.markdown_it.path.plugin;
+    const plugin_path = resolvePluginPath();
+    if (!plugin_path) {
+        mditLogger("error", "Failed to resolve plugin path.");
+        return;
+    }
 
     loadCSSFromURL(`local:///${plugin_path}/src/style/markdown.css`);
     loadCSSFromURL(`local:///${plugin_path}/src/style/katex.css`);

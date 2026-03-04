@@ -14,6 +14,8 @@
 
 安装完成后重启QQ，进入设置 > 插件列表查看，找到 `Markdown-it` 插件，点击安装。显示安装成功后，再次重启QQ即可。
 
+如果你之前安装过旧版本（`slug=markdown_it`），建议先在插件管理中卸载旧版本后再安装当前版本。
+
 ![Plugin View Plug](https://github.com/user-attachments/assets/60b36c62-1899-4a88-b4c1-5cd4bb296968)
 
 
@@ -23,7 +25,9 @@
 
 下载完成后，进入 LiteLoader 插件页，打开数据目录。
 
-创建名为 `markdown-it` 的文件夹，将下载好的 `Release.zip` 解压到新建文件夹中即可。
+创建名为 `markdown_it_v4` 的文件夹，将下载好的 `Release.zip` 解压到新建文件夹中即可。
+
+如果本地仍有旧目录 `markdown_it`，建议先删除旧目录，避免与新版本并存导致加载混淆。
 
 > 注意：解压时不要启用解压软件的「解压到新文件夹中」选项。
 

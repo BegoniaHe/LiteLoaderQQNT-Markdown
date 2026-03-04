@@ -2,35 +2,73 @@ import { createJSONStorage } from "zustand/middleware";
 
 import { PLUGIN_CONFIG } from "@/config";
 
-const emptyStorageState = {};
+const emptyStorageState: Record<string, unknown> = {};
+const missingStorageStateKey = "__mdit_missing_storage_state__";
+const missingStorageState: Record<string, unknown> = {
+    [missingStorageStateKey]: true,
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function parseStorageState(value: string): Record<string, unknown> {
+    try {
+        const parsed = JSON.parse(value);
+        return isRecord(parsed) ? parsed : emptyStorageState;
+    } catch {
+        return emptyStorageState;
+    }
+}
+
+function isMissingStorageState(value: Record<string, unknown>): boolean {
+    return value[missingStorageStateKey] === true && Object.keys(value).length === 1;
+}
+
+function buildStorageKey(prefix: string, name: string): string {
+    return `${prefix}/${name}`;
+}
 
 const _storage = {
     async getItem(name: string) {
-        return JSON.stringify(
-            await LiteLoader.api.config.get(
-                `${PLUGIN_CONFIG.SLUG_PREFIX}/${name}`,
-                emptyStorageState
-            )
+        const currentStorageKey = buildStorageKey(PLUGIN_CONFIG.SLUG_PREFIX, name);
+        const currentValue = await LiteLoader.api.config.get(
+            currentStorageKey,
+            missingStorageState
         );
+
+        if (!isMissingStorageState(currentValue)) {
+            return JSON.stringify(currentValue);
+        }
+
+        for (const legacyPrefix of PLUGIN_CONFIG.LEGACY_SLUGS) {
+            const legacyStorageKey = buildStorageKey(legacyPrefix, name);
+            const legacyValue = await LiteLoader.api.config.get(
+                legacyStorageKey,
+                missingStorageState
+            );
+
+            if (isMissingStorageState(legacyValue)) {
+                continue;
+            }
+
+            await LiteLoader.api.config.set(currentStorageKey, legacyValue);
+            return JSON.stringify(legacyValue);
+        }
+
+        return JSON.stringify(emptyStorageState);
     },
     async setItem(name: string, value: string) {
-        const parsedValue: unknown = (() => {
-            try {
-                return JSON.parse(value);
-            } catch {
-                // 当本地持久化内容损坏时，回退为空配置，避免阻塞插件加载/设置页
-                return emptyStorageState;
-            }
-        })();
+        const parsedValue = parseStorageState(value);
 
         return await LiteLoader.api.config.set(
-            `${PLUGIN_CONFIG.SLUG_PREFIX}/${name}`,
-            (parsedValue as Record<string, unknown>) ?? emptyStorageState
+            buildStorageKey(PLUGIN_CONFIG.SLUG_PREFIX, name),
+            parsedValue
         );
     },
     async removeItem(name: string) {
         return await LiteLoader.api.config.set(
-            `${PLUGIN_CONFIG.SLUG_PREFIX}/${name}`,
+            buildStorageKey(PLUGIN_CONFIG.SLUG_PREFIX, name),
             emptyStorageState
         );
     },

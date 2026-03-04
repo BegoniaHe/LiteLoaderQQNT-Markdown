@@ -26,7 +26,7 @@ export interface LiteLoaderInterFace<ConfigInfoType> {
         qqnt: object; // QQNT package.json 文件内容
     };
     plugins: {
-        markdown_it: {
+        [slug: string]: {
             incompatible: boolean; // 插件是否兼容
             disabled: boolean; // 插件是否禁用
             manifest: object; // 插件 manifest.json 文件内容

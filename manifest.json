@@ -2,18 +2,18 @@
     "manifest_version": 4,
     "type": "extension",
     "name": "Markdown-it",
-    "slug": "markdown_it",
+    "slug": "markdown_it_v4",
     "icon": "./icon.png",
     "description": "为 QQNT 提供 Markdown 渲染",
     "version": "2.4.1",
     "authors": [
         {
-            "name": "d0j1a_1701",
-            "link": "https://github.com/d0j1a1701"
+            "name": "BegoniaHe",
+            "link": "https://github.com/BegoniaHe"
         }
     ],
     "repository": {
-        "repo": "d0j1a1701/LiteLoaderQQNT-Markdown",
+        "repo": "BegoniaHe/LiteLoaderQQNT-Markdown",
         "branch": "v4",
         "release": {
             "tag": "2.4.1",

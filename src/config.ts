@@ -12,8 +12,17 @@
  * 插件配置常量
  */
 export const PLUGIN_CONFIG = {
+    /** 插件显示名 */
+    DISPLAY_NAME: "Markdown-it",
+
+    /** 当前插件 slug */
+    SLUG: "markdown_it_v4",
+
+    /** 兼容读取的历史 slug 列表 */
+    LEGACY_SLUGS: ["markdown_it"],
+
     /** 插件 slug 前缀（用于配置存储） */
-    SLUG_PREFIX: "markdown_it",
+    SLUG_PREFIX: "markdown_it_v4",
 
     /** 日志文件夹名称（主进程文件日志等用途） */
     LOG_FOLDER: "log",
