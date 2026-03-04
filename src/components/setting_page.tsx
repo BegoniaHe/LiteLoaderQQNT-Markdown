@@ -62,7 +62,7 @@ export function SettingPage() {
                         />
 
                         <SwitchSettingTile
-                            settingName="codeHighligtThemeFollowSystem"
+                            settingName="codeHighlightThemeFollowSystem"
                             title="代码高亮主题自适应"
                             caption="启用此选项后，浅色模式和深色模式下将自动套用对应的代码高亮背景"
                         />
@@ -74,7 +74,7 @@ export function SettingPage() {
                 <setting-panel>
                     <setting-list data-direction="column">
                         <SwitchSettingTile
-                            settingName="unescapeAllHtmlEntites"
+                            settingName="unescapeAllHtmlEntities"
                             title="HTML渲染"
                             caption='反转义并渲染消息中的HTML标签。本选项与"HTML净化"互相关联，两者必须同时启用或禁用以确保安全。'
                         />

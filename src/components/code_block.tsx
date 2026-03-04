@@ -1,14 +1,14 @@
-import React from "react";
 import hljs from "highlight.js";
 import type MarkdownIt from "markdown-it";
+import React from "react";
 type Token = MarkdownIt.Token;
 type Renderer = MarkdownIt.Renderer;
 type Options = MarkdownIt.Options;
 
-import { unescapeHtml, escapeHtml, purifyCodeHighlightHtml } from "@/utils/htmlProc";
+import { CLASS_NAMES, PERFORMANCE, SELECTORS } from "@/config";
 import { useSettingsStore } from "@/states/settings";
+import { escapeHtml, purifyCodeHighlightHtml, unescapeHtml } from "@/utils/htmlProc";
 import { mditLogger } from "@/utils/logger";
-import { CLASS_NAMES, SELECTORS, PERFORMANCE } from "@/config";
 
 /**
  * HighLightedCodeBlock 组件属性
@@ -90,7 +90,7 @@ export function renderInlineCodeBlockString(
     const token = tokens[idx];
 
     // 如果启用了完全反转义，需要转义代码内容防止 HTML 注入
-    if (useSettingsStore.getState().unescapeAllHtmlEntites === true) {
+    if (useSettingsStore.getState().unescapeAllHtmlEntities === true) {
         token.content = escapeHtml(token.content);
     }
 

@@ -20,7 +20,7 @@ QQNT 消息内容通过 `innerHTML` 读取，其中包含浏览器已转义的 H
 |--------|------|--------|
 | `unescapeGtInText` | 仅反转义文本中的 `&gt;` → `>`（解决块引用渲染问题） | `true` |
 | `unescapeBeforeHighlight` | 代码高亮前反转义全部 HTML 实体 | `true` |
-| `unescapeAllHtmlEntites` | 渲染前反转义全部 HTML 实体（启用自定义 HTML 时使用） | `false` |
+| `unescapeAllHtmlEntities` | 渲染前反转义全部 HTML 实体（启用自定义 HTML 时使用） | `false` |
 
 精细化反转义遵循**最小权限原则**：仅反转义渲染所必须的字符，不做过度开放。
 
@@ -45,13 +45,13 @@ QQNT 消息内容通过 `innerHTML` 读取，其中包含浏览器已转义的 H
 
 ```typescript
 // 启用完全反转义时，强制开启 HTML 净化
-if (key === 'unescapeAllHtmlEntites' && value === true) {
+if (key === 'unescapeAllHtmlEntities' && value === true) {
     state.enableHtmlPurify = true;
 }
 
 // 禁用 HTML 净化时，强制禁用完全反转义
 if (key === 'enableHtmlPurify' && value === false) {
-    state.unescapeAllHtmlEntites = false;
+    state.unescapeAllHtmlEntities = false;
 }
 ```
 
@@ -59,8 +59,8 @@ if (key === 'enableHtmlPurify' && value === false) {
 
 对应的运行时强制函数：
 
-- `forceEnableHtmlPurify()`：当 `unescapeAllHtmlEntites === true` 时，强制净化开启，无视存储值
-- `forceUnescapeBeforeHighlight()`：当 `unescapeAllHtmlEntites === true` 时，强制禁用代码块再次反转义（避免双重反转义）
+- `forceEnableHtmlPurify()`：当 `unescapeAllHtmlEntities === true` 时，强制净化开启，无视存储值
+- `forceUnescapeBeforeHighlight()`：当 `unescapeAllHtmlEntities === true` 时，强制禁用代码块再次反转义（避免双重反转义）
 
 ---
 
@@ -80,9 +80,9 @@ if (key === 'enableHtmlPurify' && value === false) {
 | 配置组合 | 风险等级 | 说明 |
 |---------|---------|------|
 | 默认配置（所有高危选项关闭） | 低 | 仅反转义 `>`，代码块高亮前反转义，净化关闭但无全量反转义 |
-| `unescapeAllHtmlEntites=true`（自动联动 `enableHtmlPurify=true`） | 中 | 启用自定义 HTML 渲染，DOMPurify 净化兜底 |
+| `unescapeAllHtmlEntities=true`（自动联动 `enableHtmlPurify=true`） | 中 | 启用自定义 HTML 渲染，DOMPurify 净化兜底 |
 | 手动开启 `enableHtmlPurify=true` | 低 | 额外净化层，安全性提升 |
-| `enableHtmlPurify=false`（且 `unescapeAllHtmlEntites=false`） | 低 | 无全量反转义，净化虽未启用但攻击面有限 |
+| `enableHtmlPurify=false`（且 `unescapeAllHtmlEntities=false`） | 低 | 无全量反转义，净化虽未启用但攻击面有限 |
 
 ---
 

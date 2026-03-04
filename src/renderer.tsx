@@ -1,23 +1,23 @@
 // 运行在 Electron 渲染进程 下的页面脚本
-import { createRoot } from "react-dom/client";
 import React from "react";
+import { createRoot } from "react-dom/client";
 import { SettingPage } from "./components/setting_page";
 
 // Components
-import { changeDirectionToColumnWhenLargerHeight } from "./components/code_block";
 import { addShowOriginButtonToMarkdownBody } from "@/components/show_origin";
+import { changeDirectionToColumnWhenLargerHeight } from "./components/code_block";
 
 // States
 import { useSettingsStore } from "@/states/settings";
 
 // Utils
-import { debounce } from "throttle-debounce";
-import { mditLogger, elementDebugLogger } from "./utils/logger";
 import { processorList } from "@/render/msgpiece_processor";
 import { postProcessRenderedMessageBox } from "@/render/postprocess";
+import { debounce } from "throttle-debounce";
+import { elementDebugLogger, mditLogger } from "./utils/logger";
 
 // Config
-import { SELECTORS, CLASS_NAMES, PERFORMANCE, CSS_IDS } from "@/config";
+import { CLASS_NAMES, CSS_IDS, PERFORMANCE, SELECTORS } from "@/config";
 
 /**
  * 使用 WeakSet 标记已渲染的消息元素
@@ -152,7 +152,8 @@ function _onLoad() {
 
     // Change fenced code block theme based on settings.
     useSettingsStore.subscribe(
-        (state: { codeHighligtThemeFollowSystem: boolean }) => state.codeHighligtThemeFollowSystem,
+        (state: { codeHighlightThemeFollowSystem: boolean }) =>
+            state.codeHighlightThemeFollowSystem,
         (isFollowSystem: boolean) => {
             if (isFollowSystem) {
                 loadCSSFromURL(
@@ -247,4 +248,4 @@ function onSettingWindowCreated(view: HTMLElement) {
     root.render(<SettingPage></SettingPage>);
 }
 
-export { onSettingWindowCreated, onLoad };
+export { onLoad, onSettingWindowCreated };

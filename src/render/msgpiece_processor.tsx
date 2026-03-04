@@ -1,18 +1,18 @@
 // markdown
-import React from "react";
-import markdownIt from "markdown-it";
-import { renderToString } from "react-dom/server";
 import katex from "@traptitech/markdown-it-katex";
+import markdownIt from "markdown-it";
+import React from "react";
+import { renderToString } from "react-dom/server";
 
 // markdown-it 高级功能插件
+import markdownItAbbr from "markdown-it-abbr";
+import markdownItDeflist from "markdown-it-deflist";
+import { full as markdownItEmojiPlugin } from "markdown-it-emoji";
 import markdownItFootnote from "markdown-it-footnote";
+import markdownItInsert from "markdown-it-ins";
 import markdownItMark from "markdown-it-mark";
 import markdownItSub from "markdown-it-sub";
 import markdownItSup from "markdown-it-sup";
-import { full as markdownItEmojiPlugin } from "markdown-it-emoji";
-import markdownItDeflist from "markdown-it-deflist";
-import markdownItInsert from "markdown-it-ins";
-import markdownItAbbr from "markdown-it-abbr";
 import markdownItTaskLists from "markdown-it-task-lists";
 
 // Components
@@ -26,7 +26,7 @@ import { purifyHtml, unescapeHtml } from "@/utils/htmlProc";
 import { mditLogger } from "@/utils/logger";
 
 // Config
-import { SELECTORS, MARKDOWN_CONFIG } from "@/config";
+import { MARKDOWN_CONFIG, SELECTORS } from "@/config";
 
 type ReplaceFunc = (parentElement: HTMLElement, id: string) => unknown;
 
@@ -90,7 +90,7 @@ function getMarkdownIns() {
     const localMarkdownItIns = markdownIt({
         // 仅在显式启用“HTML渲染”时才允许 markdown-it 解析原始 HTML
         // 否则按纯文本处理，避免不必要的攻击面
-        html: settings.unescapeAllHtmlEntites === true,
+        html: settings.unescapeAllHtmlEntities === true,
         xhtmlOut: true, // 使用 '/' 来闭合单标签 （比如 <br />）。
         // 这个选项只对完全的 CommonMark 模式兼容。
         breaks: true, // 转换段落里的 '\n' 到 <br>。
@@ -221,7 +221,7 @@ const textElementProcessor: FragmentProcessFunc = (parent, element, _index) => {
      */
     function entityProcesor(x: string): string {
         // 如果启用了完全反转义，使用 he.decode() 解码所有HTML实体
-        if (settings.unescapeAllHtmlEntites === true) {
+        if (settings.unescapeAllHtmlEntities === true) {
             return unescapeHtml(x);
         }
 

@@ -4,20 +4,6 @@
 
 ---
 
-## 配置键名拼写历史包袱
-
-**影响版本**：所有版本  
-**状态**：不影响功能，随未来版本逐步迁移
-
-以下两个配置键名存在拼写错误，为保持向后兼容性（避免破坏用户已保存的配置），暂不强制重命名：
-
-- `codeHighligtThemeFollowSystem`（正确拼写应为 `codeHighlightThemeFollowSystem`）
-- `unescapeAllHtmlEntites`（正确拼写应为 `unescapeAllHtmlEntities`）
-
-这些键名在 `src/states/settings.ts` 中定义，修改时需同步处理持久化存储的兼容迁移。
-
----
-
 ## HTML 净化默认关闭
 
 **影响版本**：所有版本  

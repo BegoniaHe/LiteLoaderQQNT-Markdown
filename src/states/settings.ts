@@ -1,17 +1,17 @@
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 
-import { persist, subscribeWithSelector } from "zustand/middleware";
 import { LiteLoaderStorage } from "@/utils/liteloader_config";
+import { persist, subscribeWithSelector } from "zustand/middleware";
 
 export interface SettingStateProperties {
     // Boolean properties
     linkify: boolean;
     typographer: boolean;
-    codeHighligtThemeFollowSystem: boolean;
+    codeHighlightThemeFollowSystem: boolean;
 
     // HTML related settings
-    unescapeAllHtmlEntites: boolean;
+    unescapeAllHtmlEntities: boolean;
     enableHtmlPurify: boolean;
 
     // HTML escape settings
@@ -38,7 +38,7 @@ export interface SettingStateAction {
  * forcefieldName() method is used to return the value indicating the setting
  * `fieldName` is forced to that value despite the value stored in state.
  * Return `undefined` means repect values stored in states.
- * For example, when `unescapeAllHtmlEntites = true`, `forceEnableHtmlPurify()`
+ * For example, when `unescapeAllHtmlEntities = true`, `forceEnableHtmlPurify()`
  * should return `true` to make sure all HTML content be sanitized before rendering.
  */
 export const useSettingsStore = create<SettingStateProperties & SettingStateAction>()(
@@ -47,10 +47,10 @@ export const useSettingsStore = create<SettingStateProperties & SettingStateActi
             subscribeWithSelector((set, get) => ({
                 linkify: true,
                 typographer: false,
-                codeHighligtThemeFollowSystem: true,
+                codeHighlightThemeFollowSystem: true,
 
                 // HTML related
-                unescapeAllHtmlEntites: false,
+                unescapeAllHtmlEntities: false,
                 enableHtmlPurify: false,
 
                 // HTML escape settings
@@ -63,14 +63,14 @@ export const useSettingsStore = create<SettingStateProperties & SettingStateActi
                 showOriginalButton: false,
 
                 forceUnescapeBeforeHighlight: () => {
-                    if (get().unescapeAllHtmlEntites === true) {
+                    if (get().unescapeAllHtmlEntities === true) {
                         return false;
                     }
                     return undefined;
                 },
 
                 forceEnableHtmlPurify: () => {
-                    if (get().unescapeAllHtmlEntites === true) {
+                    if (get().unescapeAllHtmlEntities === true) {
                         return true;
                     }
                     return undefined;
@@ -94,12 +94,12 @@ export const useSettingsStore = create<SettingStateProperties & SettingStateActi
 
                         // 安全策略：HTML净化和反转义的双向约束
                         // 防止XSS攻击风险
-                        if (key === "unescapeAllHtmlEntites" && value === true) {
+                        if (key === "unescapeAllHtmlEntities" && value === true) {
                             // 启用完全反转义时，强制启用HTML净化
                             state.enableHtmlPurify = true;
                         } else if (key === "enableHtmlPurify" && value === false) {
                             // 禁用HTML净化时，强制禁用完全反转义
-                            state.unescapeAllHtmlEntites = false;
+                            state.unescapeAllHtmlEntities = false;
                         }
                     });
                 },
