@@ -24,6 +24,11 @@ import { CLASS_NAMES, CSS_IDS, PERFORMANCE, SELECTORS } from "@/config";
  */
 const renderedMessages = new WeakSet<HTMLElement>();
 
+/**
+ * 使用 WeakSet 标记渲染中的消息元素
+ */
+const renderingInProgress = new WeakSet<HTMLElement>();
+
 // 避免在宿主重复注入/热重载等场景下重复初始化
 const INIT_FLAG = "__markdown_it_renderer_inited__";
 const globalFlags = globalThis as typeof globalThis & Record<string, unknown>;
@@ -53,8 +58,13 @@ async function render(): Promise<void> {
     const elements = document.querySelectorAll(SELECTORS.MESSAGE_CONTENT);
 
     const newlyFoundMsgList = Array.from(elements)
-        // 跳过已渲染的消息 - 使用 WeakSet 更可靠
-        .filter((messageBox) => !renderedMessages.has(messageBox as HTMLElement))
+        // 跳过已渲染或渲染中的消息 - 使用 WeakSet 更可靠
+        .filter((messageBox) => {
+            const htmlMessageBox = messageBox as HTMLElement;
+            return (
+                !renderedMessages.has(htmlMessageBox) && !renderingInProgress.has(htmlMessageBox)
+            );
+        })
         // 跳过空消息
         .filter((messageBox) => messageBox.childNodes.length > 0);
 
@@ -77,66 +87,91 @@ async function render(): Promise<void> {
 }
 
 async function renderSingleMsgBox(messageBox: HTMLElement) {
-    // 检查是否已渲染 - 双重检查确保安全
-    if (renderedMessages.has(messageBox)) {
+    // 检查是否已渲染或正在渲染 - 双重检查确保安全
+    if (renderedMessages.has(messageBox) || renderingInProgress.has(messageBox)) {
         return;
     }
 
-    // 标记为已渲染 - 优先标记防止并发问题
-    renderedMessages.add(messageBox);
-    // 同时添加 CSS 类名作为后备标记（供样式使用）
-    messageBox.classList.add(CLASS_NAMES.MARKDOWN_RENDERED);
+    renderingInProgress.add(messageBox);
 
-    // Capture original DOM nodes for "Show Original" feature.
-    // Use node clones instead of innerHTML to avoid string re-parse/injection boundary issues.
-    const msgBoxOriginalNodes = Array.from(messageBox.childNodes).map((node) =>
-        node.cloneNode(true)
-    );
+    try {
+        const showOriginalButtonEnabled = useSettingsStore.getState().showOriginalButton;
 
-    // Get all children of message box. Return if length is zero.
-    const originalSpanList = Array.from(messageBox.children);
-    mditLogger("debug", "renderSingleMsgBox", "originalSpanList:", originalSpanList);
-    if (originalSpanList.length == 0) return;
+        // Capture original DOM nodes for "Show Original" feature only when enabled.
+        // Use node clones instead of innerHTML to avoid string re-parse/injection boundary issues.
+        const msgBoxOriginalNodes = showOriginalButtonEnabled
+            ? Array.from(messageBox.childNodes).map((node) => node.cloneNode(true))
+            : undefined;
 
-    // Here using entityProcess which may finally call DOMParser().parseFromString(input, "text/html");
-    // This may introduce XSS attack vulnerability, however, we will use DOMPurify to prevent all
-    // dangerous HTML elements when rendering markdown.
-
-    // use fragment processors to deal with the span in messages one by one
-    // finally, we will get a list of rendered span
-    const renderedSpanInfo = originalSpanList.map((msgSpan, index) => {
-        mditLogger("debug", "PieceProcessor", "Original Piece:", msgSpan);
-
-        // Try to apply piece processor in order. Stop once a processor could process current msgPiece
-        for (const processor of processorList) {
-            // try get the return value of the processor
-            const renderedSpan = processor(messageBox, msgSpan as HTMLElement, index);
-            // if processor returned a non-undefined value, use the new element
-            if (renderedSpan !== undefined) {
-                return renderedSpan;
-            }
+        // Get all children of message box. Return if length is zero.
+        const originalSpanList = Array.from(messageBox.children);
+        mditLogger("debug", "renderSingleMsgBox", "originalSpanList:", originalSpanList);
+        if (originalSpanList.length == 0) {
+            return;
         }
 
-        // here means no any frag processor could handle this msgSpan, just return itself,
-        // in other word, keep it's original looks.
-        return { original: msgSpan, rendered: msgSpan };
-    });
+        // Here using entityProcess which may finally call DOMParser().parseFromString(input, "text/html");
+        // This may introduce XSS attack vulnerability, however, we will use DOMPurify to prevent all
+        // dangerous HTML elements when rendering markdown.
 
-    mditLogger("debug", "RenderedList generated, start replacing messagebox children...");
+        // use fragment processors to deal with the span in messages one by one
+        // finally, we will get a list of rendered span
+        const renderedSpanInfo = originalSpanList.map((msgSpan, index) => {
+            mditLogger("debug", "PieceProcessor", "Original Piece:", msgSpan);
 
-    // replace the children based on rendered info
-    for (const renderedInfo of renderedSpanInfo) {
-        mditLogger("debug", "Try to replace:", renderedInfo);
-        messageBox.replaceChild(renderedInfo.rendered, renderedInfo.original);
+            // Try to apply piece processor in order. Stop once a processor could process current msgPiece
+            for (const processor of processorList) {
+                // try get the return value of the processor
+                const renderedSpan = processor(messageBox, msgSpan as HTMLElement, index);
+                // if processor returned a non-undefined value, use the new element
+                if (renderedSpan !== undefined) {
+                    return renderedSpan;
+                }
+            }
+
+            // here means no any frag processor could handle this msgSpan, just return itself,
+            // in other word, keep it's original looks.
+            return { original: msgSpan, rendered: msgSpan };
+        });
+
+        mditLogger("debug", "RenderedList generated, start replacing messagebox children...");
+
+        // replace the children based on rendered info
+        for (const renderedInfo of renderedSpanInfo) {
+            mditLogger("debug", "Try to replace:", renderedInfo);
+            messageBox.replaceChild(renderedInfo.rendered, renderedInfo.original);
+        }
+
+        const markdownBody = messageBox;
+
+        // Post-process (bind events, link openExternal, etc.)
+        postProcessRenderedMessageBox(markdownBody);
+
+        // Add ShowOriginalContent button for this message.
+        if (showOriginalButtonEnabled && msgBoxOriginalNodes) {
+            addShowOriginButtonToMarkdownBody(markdownBody, messageBox, msgBoxOriginalNodes);
+        }
+
+        // 成功处理后再标记已渲染
+        renderedMessages.add(messageBox);
+        messageBox.classList.add(CLASS_NAMES.MARKDOWN_RENDERED);
+    } finally {
+        renderingInProgress.delete(messageBox);
     }
+}
 
-    const markdownBody = messageBox;
+function applyCodeHighlightTheme(pluginPath: string, isFollowSystem: boolean): void {
+    const darkThemeLink = loadCSSFromURL(
+        `local:///${pluginPath}/src/style/hljs-github-dark.css`,
+        CSS_IDS.GITHUB_HL_DARK
+    );
+    const adaptiveThemeLink = loadCSSFromURL(
+        `local:///${pluginPath}/src/style/hljs-github.css`,
+        CSS_IDS.GITHUB_HL_ADAPTIVE
+    );
 
-    // Post-process (bind events, link openExternal, etc.)
-    postProcessRenderedMessageBox(markdownBody);
-
-    // Add ShowOriginalContent button for this message.
-    addShowOriginButtonToMarkdownBody(markdownBody, messageBox, msgBoxOriginalNodes);
+    darkThemeLink.disabled = isFollowSystem;
+    adaptiveThemeLink.disabled = !isFollowSystem;
 }
 
 function _onLoad() {
@@ -144,28 +179,18 @@ function _onLoad() {
 
     loadCSSFromURL(`local:///${plugin_path}/src/style/markdown.css`);
     loadCSSFromURL(`local:///${plugin_path}/src/style/katex.css`);
-    loadCSSFromURL(
-        `local:///${plugin_path}/src/style/hljs-github-dark.css`,
-        CSS_IDS.GITHUB_HL_DARK
+
+    applyCodeHighlightTheme(
+        plugin_path,
+        useSettingsStore.getState().codeHighlightThemeFollowSystem
     );
-    loadCSSFromURL(`local:///${plugin_path}/src/style/hljs-github.css`, CSS_IDS.GITHUB_HL_ADAPTIVE);
 
     // Change fenced code block theme based on settings.
     useSettingsStore.subscribe(
         (state: { codeHighlightThemeFollowSystem: boolean }) =>
             state.codeHighlightThemeFollowSystem,
         (isFollowSystem: boolean) => {
-            if (isFollowSystem) {
-                loadCSSFromURL(
-                    `local:///${plugin_path}/src/style/hljs-github.css`,
-                    CSS_IDS.GITHUB_HL_ADAPTIVE
-                );
-            } else {
-                loadCSSFromURL(
-                    `local:///${plugin_path}/src/style/hljs-github-dark.css`,
-                    CSS_IDS.GITHUB_HL_DARK
-                );
-            }
+            applyCodeHighlightTheme(plugin_path, isFollowSystem);
         }
     );
 
@@ -213,14 +238,14 @@ function _onLoad() {
 /**
  * Util function used in onLoad() to load local CSS.
  */
-function loadCSSFromURL(url: string, id?: string) {
+function loadCSSFromURL(url: string, id?: string): HTMLLinkElement {
     if (id) {
         const existing = document.getElementById(id);
         if (existing && existing instanceof HTMLLinkElement) {
             if (existing.href !== url) {
                 existing.href = url;
             }
-            return;
+            return existing;
         }
     }
 
@@ -231,6 +256,8 @@ function loadCSSFromURL(url: string, id?: string) {
         link.id = id;
     }
     document.head.appendChild(link);
+
+    return link;
 }
 
 function onLoad() {
